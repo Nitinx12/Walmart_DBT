@@ -1,0 +1,20 @@
+[project]
+name = "walmart"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "databricks>=0.2",
+    "dotenv>=0.9.9",
+    "logging>=0.4.9.6",
+    "matplotlib>=3.11.1",
+    "mongo>=0.2.0",
+    "postgres>=4.0",
+    "pyarrow>=25.0.0",
+    "pymongo>=4.17.0",
+    "pyspark>=4.2.0",
+    "rich>=15.0.0",
+    "seaborn>=0.13.2",
+    "sqlalchemy>=2.0.51",
+]
