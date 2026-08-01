@@ -1,0 +1,151 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.pyre/
+
+# ==========================
+# Virtual Environments
+# ==========================
+.venv/
+venv/
+env/
+ENV/
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
+# IDE / Editors
+# ==========================
+.vscode/
+.idea/
+*.code-workspace
+
+# ==========================
+# Jupyter Notebook
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+
+# ==========================
+# Temporary Files
+# ==========================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# ==========================
+# Build / Distribution
+# ==========================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================
+# Database Files
+# ==========================
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+
+# ==========================
+# ETL Outputs
+# ==========================
+output/
+exports/
+reports/
+artifacts/
+
+# Generated datasets
+processed_data/
+cleaned_data/
+intermediate/
+
+# ==========================
+# Data Files (Optional)
+# Uncomment if data is too large
+# ==========================
+# data/raw/
+# data/processed/
+# *.csv
+# *.parquet
+# *.json
+# *.xlsx
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# Testing
+# ==========================
+.pytest_cache/
+.tox/
+.nox/
+
+# ==========================
+# uv
+# ==========================
+.python-version
+
+# ==========================
+# Airflow
+# ==========================
+airflow.db
+airflow-webserver.pid
+airflow.cfg
+logs/
+dags/__pycache__/
+
+# ==========================
+# dbt
+# ==========================
+target/
+dbt_packages/
+logs/
+
+# ==========================
+# Terraform (if used)
+# ==========================
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# ==========================
+# Docker
+# ==========================
+*.pid
+
+# ==========================
+# Keep Empty Directories
+# ==========================
+!logs/.gitkeep
+!output/.gitkeep
+!exports/.gitkeep
+__init__.py
