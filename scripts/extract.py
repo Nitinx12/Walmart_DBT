@@ -8,8 +8,9 @@ WHAT IT DOES
 1. Auto-discovers every user collection in the configured Mongo database
    (no hardcoded collection list).
 2. For each collection, loads it into Spark via the MongoDB Spark Connector
-   and merges it into a same-named table in the Postgres `public` schema
-   via the JDBC driver in jars/postgresql.jar.
+   and merges it into a same-named table in the configured Postgres schema
+   (POSTGRES_SCHEMA_BRONZE in .env, "bronze" by default) via the JDBC
+   driver in jars/postgresql.jar.
 3. Incremental watermark column is auto-detected per collection (no single
    hardcoded name), checked in this priority order:
        updated_timestamp -> updated_at -> created_timestamp -> created_at
@@ -28,11 +29,11 @@ WHAT IT DOES
    `INSERT ... ON CONFLICT ("_id") DO UPDATE` merges it into the real
    table, with `xmax = 0` used to split the result into exact
    inserted-vs-updated counts.
-5. Watermark state lives in `public.etl_watermarks` (one row per
+5. Watermark state lives in `<schema>.etl_watermarks` (one row per
    collection: which column was used, the last value seen, last run info).
-   Per-collection run history lives in `public.etl_logs` (one audit row
+   Per-collection run history lives in `<schema>.etl_logs` (one audit row
    per collection per run) -- both plain Postgres tables, queryable with
-   any SQL client.
+   any SQL client, in the same schema as the mirrored collections.
 6. Column names/types are left exactly as Spark infers them from Mongo and
    as Spark's JDBC writer maps them into Postgres -- nothing is renamed or
    cast. The one unavoidable exception: Mongo's `_id` (ObjectId) and any
@@ -65,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -143,7 +145,7 @@ MONGO_CONNECTOR_JAR_URLS = {
         "https://repo1.maven.org/maven2/org/mongodb/bson-record-codec/5.1.4/bson-record-codec-5.1.4.jar",
 }
 
-POSTGRES_SCHEMA = "public"
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA_BRONZE", "bronze")
 PRIMARY_KEY_COLUMN = "_id"
 
 # Checked in this order per collection; first one actually present wins.
@@ -151,7 +153,7 @@ PRIMARY_KEY_COLUMN = "_id"
 # that were modified after insert, not just brand-new ones.
 INCREMENTAL_COLUMN_CANDIDATES = ["updated_timestamp", "updated_at", "created_timestamp", "created_at"]
 
-# Control tables (also live in the `public` schema, alongside the mirrored
+# Control tables (also live in POSTGRES_SCHEMA, alongside the mirrored
 # collections). These are the source of truth for incremental state and run
 # history -- deliberately plain tables so they can be queried with any SQL
 # client, not just this script.
