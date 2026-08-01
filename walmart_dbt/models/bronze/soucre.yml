@@ -1,0 +1,15 @@
+version: 2
+sources:
+  - name: bronze
+    database: walmart_db
+    schema: bronze
+    description: "This source contain the raw data from postgres bronze schema"
+
+    tables:
+      - name: customers
+      - name: orders
+      - name: order_items
+      - name: products
+      - name: stores
+      - name: employees
+      
