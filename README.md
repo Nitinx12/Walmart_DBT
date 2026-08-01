@@ -1,6 +1,9 @@
 
 ```
 walmart
+├─ .dockerignore
+├─ docker
+│  └─ Dockerfile
 ├─ jars
 │  ├─ bson-5.1.4.jar
 │  ├─ bson-record-codec-5.1.4.jar
@@ -14,6 +17,23 @@ walmart
 ├─ scripts
 │  └─ extract.py
 ├─ sql
+│  └─ 00_init_schema.sql
+├─ tests
+│  ├─ bronze
+│  │  ├─ 01_lp_check_bronze_tables.sql
+│  │  ├─ 02_lp_check_columns_exist.sql.sql
+│  │  └─ 03_lp_check_metadata_columns.sql
+│  ├─ gold
+│  └─ silver
+│     ├─ 01_lp_check_duplicates.sql
+│     ├─ 02_lp_check_nulls.sql
+│     ├─ 03_lp_check_numeric_format.sql
+│     ├─ 04_lp_check_negative_values.sql
+│     ├─ 05_lp_check_foreign_keys.sql
+│     ├─ 06_lp_check_date_ranges.sql
+│     ├─ 07_lp_check_domain_values.sql
+│     ├─ 09_lp_check_unwanted_spaces.sql
+│     └─ 10_lp_check_business_rules.sql
 ├─ utils
 │  ├─ connection.py
 │  ├─ engine.py
@@ -29,6 +49,10 @@ walmart
    │  ├─ bronze
    │  │  └─ soucre.yml
    │  ├─ gold
+   │  │  ├─ dim_brands.sql
+   │  │  ├─ dim_orders.sql
+   │  │  ├─ dim_products.sql
+   │  │  └─ fact_order_items.sql
    │  └─ silver
    │     ├─ brands.sql
    │     ├─ categories.sql
@@ -36,7 +60,7 @@ walmart
    │     ├─ employees.sql
    │     ├─ orders.sql
    │     ├─ order_items.sql
-   │     ├─ payments_methods.sql
+   │     ├─ payment_methods.sql
    │     ├─ products.sql
    │     ├─ schema.yml
    │     └─ stores.sql
@@ -46,8 +70,9 @@ walmart
    ├─ seeds
    ├─ snapshots
    └─ tests
-      └─ genric
+      └─ generic
          ├─ test_accepted_range.sql
-         └─ test_matches_regex.sql
+         ├─ test_matches_regex.sql
+         └─ test_no_orphan_rows.sql
 
 ```

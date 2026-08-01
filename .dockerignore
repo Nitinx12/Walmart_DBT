@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# VS Code
+.vscode/
+.idea/
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# dbt artifacts
+walmart_dbt/target/
+walmart_dbt/dbt_packages/
+walmart_dbt/logs/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.*
+
+# Temporary
+tmp/
+temp/
+
+# Documentation
+README.md
+
+# Docker
+Dockerfile
+.dockerignore
