@@ -6,6 +6,8 @@
         2. Bronze SQL tests (tests/bronze/*.sql)
         3. dbt silver build + test (walmart_dbt, models/silver)
         4. Silver SQL tests (tests/silver/*.sql)
+        5. dbt gold build + test (walmart_dbt, models/gold)
+        6. Gold SQL tests (tests/gold/*.sql)
 
     Stops immediately on the first failed stage.
 
@@ -122,7 +124,7 @@ $RequiredPysparkVersion = "3.5.5"
 # ---------------------------------------------------------------------------
 # Stage 0: Preflight - pyspark / mongo-spark-connector version check
 # ---------------------------------------------------------------------------
-Write-StageHeader "STEP 0 / 4  -  PREFLIGHT (dependency check)"
+Write-StageHeader "STEP 0 / 6  -  PREFLIGHT (dependency check)"
 
 $installedPyspark = (uv run python -c "import pyspark; print(pyspark.__version__)" 2>$null).Trim()
 
@@ -144,7 +146,7 @@ Write-StagePass "pyspark version OK ($RequiredPysparkPrefix.x)"
 # ---------------------------------------------------------------------------
 # Stage 1: Extract
 # ---------------------------------------------------------------------------
-Write-StageHeader "STEP 1 / 4  -  EXTRACT (scripts/extract.py)"
+Write-StageHeader "STEP 1 / 6  -  EXTRACT (scripts/extract.py)"
 
 uv run python scripts/extract.py
 if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Extract" }
@@ -154,7 +156,7 @@ Write-StagePass "Extract completed"
 # ---------------------------------------------------------------------------
 # Stage 2: Bronze SQL tests
 # ---------------------------------------------------------------------------
-Write-StageHeader "STEP 2 / 4  -  BRONZE SQL TESTS (tests/bronze)"
+Write-StageHeader "STEP 2 / 6  -  BRONZE SQL TESTS (tests/bronze)"
 
 uv run python scripts/sql_test.py tests/bronze
 if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Bronze Tests" }
@@ -164,7 +166,7 @@ Write-StagePass "Bronze SQL tests passed"
 # ---------------------------------------------------------------------------
 # Stage 3: dbt silver build + test
 # ---------------------------------------------------------------------------
-Write-StageHeader "STEP 3 / 4  -  DBT SILVER (walmart_dbt)"
+Write-StageHeader "STEP 3 / 6  -  DBT SILVER (walmart_dbt)"
 
 Set-Location "$ProjectRoot/walmart_dbt"
 
@@ -187,12 +189,45 @@ Write-StagePass "dbt silver build + tests passed"
 # ---------------------------------------------------------------------------
 # Stage 4: Silver SQL tests
 # ---------------------------------------------------------------------------
-Write-StageHeader "STEP 4 / 4  -  SILVER SQL TESTS (tests/silver)"
+Write-StageHeader "STEP 4 / 6  -  SILVER SQL TESTS (tests/silver)"
 
 uv run python scripts/sql_test.py tests/silver
 if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Silver Tests" }
 $StageResults["Silver Tests"] = "PASS"
 Write-StagePass "Silver SQL tests passed"
+
+# ---------------------------------------------------------------------------
+# Stage 5: dbt gold build + test
+# ---------------------------------------------------------------------------
+Write-StageHeader "STEP 5 / 6  -  DBT GOLD (walmart_dbt)"
+
+Set-Location "$ProjectRoot/walmart_dbt"
+
+uv run dbt run --select gold
+$dbtGoldRunExit = $LASTEXITCODE
+
+if ($dbtGoldRunExit -eq 0) {
+    uv run dbt test --select gold
+    $dbtGoldTestExit = $LASTEXITCODE
+} else {
+    $dbtGoldTestExit = 1
+}
+
+Set-Location $ProjectRoot
+
+if ($dbtGoldRunExit -ne 0 -or $dbtGoldTestExit -ne 0) { Stop-Pipeline "Gold dbt" }
+$StageResults["Gold dbt"] = "PASS"
+Write-StagePass "dbt gold build + tests passed"
+
+# ---------------------------------------------------------------------------
+# Stage 6: Gold SQL tests
+# ---------------------------------------------------------------------------
+Write-StageHeader "STEP 6 / 6  -  GOLD SQL TESTS (tests/gold)"
+
+uv run python scripts/sql_test.py tests/gold
+if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Gold Tests" }
+$StageResults["Gold Tests"] = "PASS"
+Write-StagePass "Gold SQL tests passed"
 
 # ---------------------------------------------------------------------------
 # Done

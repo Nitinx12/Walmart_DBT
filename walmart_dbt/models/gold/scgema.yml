@@ -1,0 +1,386 @@
+version: 2
+
+models:
+  - name: dim_brands
+    description: >
+      Gold brand dimension. Append-only, mirrors silver.brands 1:1 with a
+      gold_loaded_at load timestamp added.
+    columns:
+      - name: brand_id
+        tests:
+          - unique
+          - not_null
+
+      - name: brand_name
+        tests:
+          - unique
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_categories
+    description: >
+      Gold category dimension. Append-only, mirrors silver.categories 1:1
+      with a gold_loaded_at load timestamp added.
+    columns:
+      - name: category_id
+        tests:
+          - unique
+          - not_null
+
+      - name: category_name
+        tests:
+          - unique
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_payment_methods
+    description: >
+      Gold payment method dimension. Append-only, mirrors
+      silver.payment_methods 1:1 with a gold_loaded_at load timestamp added.
+    columns:
+      - name: payment_method_id
+        tests:
+          - unique
+          - not_null
+
+      - name: payment_method_name
+        tests:
+          - unique
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_customers
+    description: >
+      Gold customer dimension. One row per customer_id (latest version,
+      Type 1), mirrors silver.customers with a gold_loaded_at load
+      timestamp added.
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_name
+        tests:
+          - not_null
+
+      - name: email
+        tests:
+          - not_null
+
+      - name: is_active
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['true', 'false']
+                quote: false
+              config:
+                where: "is_active is not null"
+
+      - name: city
+        tests:
+          - not_null
+
+      - name: province
+        tests:
+          - not_null
+
+      - name: country
+        tests:
+          - not_null
+
+      - name: created_timestamp
+        tests:
+          - not_null
+
+      - name: updated_timestamp
+        tests:
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_stores
+    description: >
+      Gold store dimension. One row per store_id (latest version, Type 1),
+      mirrors silver.stores with a gold_loaded_at load timestamp added.
+    columns:
+      - name: store_id
+        tests:
+          - unique
+          - not_null
+
+      - name: store_name
+        tests:
+          - not_null
+
+      - name: city
+        tests:
+          - not_null
+
+      - name: province
+        tests:
+          - not_null
+
+      - name: country
+        tests:
+          - not_null
+
+      - name: is_active
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['true', 'false']
+                quote: false
+              config:
+                where: "is_active is not null"
+
+      - name: created_timestamp
+        tests:
+          - not_null
+
+      - name: updated_timestamp
+        tests:
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_products
+    description: >
+      Gold product dimension. One row per product_id (latest version,
+      Type 1). Fully normalized: brand_id / category_id are FKs to their
+      own dimension tables, no denormalized names.
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+      - name: product_name
+        tests:
+          - not_null
+
+      - name: brand_id
+        description: FK to dim_brands.brand_id. NULL allowed when source brand was blank/null.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_brands')
+                field: brand_id
+              config:
+                where: "brand_id is not null"
+
+      - name: category_id
+        description: FK to dim_categories.category_id. NULL allowed when source category was blank/null.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_categories')
+                field: category_id
+              config:
+                where: "category_id is not null"
+
+      - name: is_active
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['true', 'false']
+                quote: false
+              config:
+                where: "is_active is not null"
+
+      - name: price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+              config:
+                severity: error
+
+      - name: created_timestamp
+        tests:
+          - not_null
+
+      - name: updated_timestamp
+        tests:
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: dim_orders
+    description: >
+      Gold order dimension. One row per order_id (latest version, Type 1).
+      Fully normalized: store_id / customer_id / payment_method_id are FKs
+      to their own dimension tables, no denormalized names.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+
+      - name: store_id
+        description: FK to dim_stores.store_id.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_stores')
+                field: store_id
+
+      - name: customer_id
+        description: FK to dim_customers.customer_id.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: payment_method_id
+        description: FK to dim_payment_methods.payment_method_id. NULL allowed when source payment_method was blank/null.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_payment_methods')
+                field: payment_method_id
+              config:
+                where: "payment_method_id is not null"
+
+      - name: order_status
+        tests:
+          - not_null
+
+      - name: is_active
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['true', 'false']
+                quote: false
+              config:
+                where: "is_active is not null"
+
+      - name: total_amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+              config:
+                severity: error
+
+      - name: order_timestamp
+        tests:
+          - not_null
+
+      - name: created_timestamp
+        tests:
+          - not_null
+
+      - name: updated_timestamp
+        tests:
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null
+
+  - name: fact_order_items
+    description: >
+      Gold fact table. Grain: one row per order line item (order_item_id).
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "line_amount = round(quantity * unit_price, 2)"
+          config:
+            severity: error
+    columns:
+      - name: order_item_id
+        tests:
+          - unique
+          - not_null
+
+      - name: order_id
+        description: FK to dim_orders.order_id.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_orders')
+                field: order_id
+
+      - name: product_id
+        description: FK to dim_products.product_id.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+
+      - name: is_active
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['true', 'false']
+                quote: false
+              config:
+                where: "is_active is not null"
+
+      - name: quantity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                inclusive: true
+              config:
+                severity: error
+
+      - name: unit_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+              config:
+                severity: error
+
+      - name: line_amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+              config:
+                severity: error
+
+      - name: created_timestamp
+        tests:
+          - not_null
+
+      - name: updated_timestamp
+        tests:
+          - not_null
+
+      - name: gold_loaded_at
+        tests:
+          - not_null

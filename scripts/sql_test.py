@@ -3,7 +3,8 @@ Runs every .sql file in a given test directory against Postgres.
 
 Supports TWO test conventions, auto-detected per file:
 
-  1. SELECT-style tests (e.g. dbt generic tests, tests/silver/*.sql):
+  1. SELECT-style tests (e.g. dbt generic tests, tests/silver/*.sql,
+     tests/gold/*.sql):
        - The query SELECTs the rows that VIOLATE the rule.
        - Empty result set  -> PASS
        - Any rows returned -> FAIL (rows written to the log file)
@@ -18,6 +19,7 @@ Supports TWO test conventions, auto-detected per file:
 Usage:
     uv run python scripts/sql_test.py tests/bronze
     uv run python scripts/sql_test.py tests/silver
+    uv run python scripts/sql_test.py tests/gold
 
 Exit code: 0 if all tests pass, 1 if any test fails.
 
