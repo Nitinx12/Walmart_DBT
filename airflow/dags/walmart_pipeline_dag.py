@@ -33,11 +33,36 @@ REQUIRED_PYSPARK_VERSION = "3.5.5"
 # BashOperator/@task.bash does not auto-load .env the way ps1's Import-DotEnv
 # does, so every task sources it explicitly. Silently no-ops if missing,
 # same as ps1's WARNING-only behavior on a missing file.
+#
+# .env is shared with local Windows runs (run_pipeline.ps1) and is NOT
+# edited for container use -- it points Postgres/Mongo at "localhost" and
+# PySpark at a Windows .venv, none of which resolve correctly from inside
+# this container. Instead of touching .env (other files depend on it as-is),
+# override those specific values here, after sourcing, so only the
+# Airflow-container execution path is affected:
+#   - POSTGRES_HOST / MONGO_URI: "localhost" -> "host.docker.internal",
+#     since Postgres/Mongo run on the host machine, not in this compose
+#     stack. Uses shell substitution so it's a no-op if .env ever points
+#     elsewhere (e.g. a real remote host) instead of localhost.
+#   - PYSPARK_PYTHON / PYSPARK_DRIVER_PYTHON: forced to the container's own
+#     venv (matches Dockerfile.airflow's ENV, which .env sourcing would
+#     otherwise clobber with the Windows path).
+#   - DBT_PROFILES_DIR: dbt defaults to ~/.dbt, which doesn't exist in this
+#     container and, even mounted, would expose unrelated projects' creds
+#     from the global profiles.yml. Points instead at a project-scoped
+#     profiles.yml (docker/dbt/profiles.yml) containing only the
+#     walmart_dbt entry, bind-mounted in automatically since it lives
+#     under /app.
 _PREAMBLE = (
     "set -euo pipefail; "
     f"cd {PROJECT_ROOT}; "
     f'if [ -f "{PROJECT_ROOT}/.env" ]; then set -a; source "{PROJECT_ROOT}/.env"; set +a; fi; '
+    'export POSTGRES_HOST="${POSTGRES_HOST/localhost/host.docker.internal}"; '
+    'export MONGO_URI="${MONGO_URI//localhost/host.docker.internal}"; '
     f"export PYTHONPATH={PROJECT_ROOT}; "
+    "export PYSPARK_PYTHON=/app/.venv/bin/python; "
+    "export PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python; "
+    f"export DBT_PROFILES_DIR={PROJECT_ROOT}/docker/dbt; "
 )
 
 
