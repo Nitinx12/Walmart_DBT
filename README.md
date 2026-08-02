@@ -2,6 +2,7 @@
 ```
 walmart
 ├─ .dockerignore
+├─ airflow
 ├─ docker
 │  └─ Dockerfile
 ├─ jars
@@ -12,10 +13,13 @@ walmart
 │  ├─ mongodb-driver-sync-5.1.4.jar
 │  └─ postgresql.jar
 ├─ main.py
+├─ pipeline
+│  └─ run_pipeline.ps1
 ├─ pyproject.toml
 ├─ README.md
 ├─ scripts
-│  └─ extract.py
+│  ├─ extract.py
+│  └─ sql_test.py
 ├─ sql
 │  └─ 00_init_schema.sql
 ├─ tests
@@ -24,6 +28,13 @@ walmart
 │  │  ├─ 02_lp_check_columns_exist.sql.sql
 │  │  └─ 03_lp_check_metadata_columns.sql
 │  ├─ gold
+│  │  ├─ 01_lp_check_not_empty.sql
+│  │  ├─ 02_lp_check_date_ranges.sql
+│  │  ├─ 03_lp_check_duplicates.sql
+│  │  ├─ 04_lp_check_negative.sql
+│  │  ├─ 05_lp_check_referential_integrity.sql
+│  │  ├─ 06_lp_check_unwanted_spaces.sql
+│  │  └─ 07_row_count_validation.sql
 │  └─ silver
 │     ├─ 01_lp_check_duplicates.sql
 │     ├─ 02_lp_check_nulls.sql
@@ -37,8 +48,7 @@ walmart
 ├─ utils
 │  ├─ connection.py
 │  ├─ engine.py
-│  ├─ logger.py
-│  └─ __inti__.py
+│  └─ logger.py
 ├─ uv.lock
 └─ walmart_dbt
    ├─ analyses
@@ -50,9 +60,14 @@ walmart
    │  │  └─ soucre.yml
    │  ├─ gold
    │  │  ├─ dim_brands.sql
+   │  │  ├─ dim_categories.sql
+   │  │  ├─ dim_customers.sql
    │  │  ├─ dim_orders.sql
+   │  │  ├─ dim_payment_methods.sql
    │  │  ├─ dim_products.sql
-   │  │  └─ fact_order_items.sql
+   │  │  ├─ dim_stores.sql
+   │  │  ├─ fact_order_items.sql
+   │  │  └─ scgema.yml
    │  └─ silver
    │     ├─ brands.sql
    │     ├─ categories.sql

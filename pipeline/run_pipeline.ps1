@@ -34,7 +34,7 @@
       - dbt-postgres available in the project env if not already
       - A `.env` file at project root with
         POSTGRES_HOST / POSTGRES_PORT / POSTGRES_DATABASE / POSTGRES_USERNAME / POSTGRES_PASSWORD
-      - utils/__init__.py must exist (fix the __inti__.py typo) so
+      - utils/__init__.py must exist at the project root so that
         `from utils.logger import get_logger` resolves correctly
 #>
 
