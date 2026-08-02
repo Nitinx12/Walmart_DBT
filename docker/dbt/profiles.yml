@@ -1,0 +1,26 @@
+# Target location: docker/dbt/profiles.yml
+#
+# Project-scoped copy of the walmart_dbt entry from the global
+# ~/.dbt/profiles.yml. Not a bind-mount of that file on purpose -- the
+# global file holds credentials/tokens for several unrelated projects
+# (banking_dbt, bike_project, datawarehouse, etc.) that have no business
+# being visible inside this container or committed to this repo.
+#
+# Only real change from the global entry: `host` uses the same
+# env_var(...) pattern the global file's retail_data_warehouse profile
+# already uses, defaulting to localhost so this also works unmodified for
+# any local (non-container) dbt runs that point DBT_PROFILES_DIR here.
+# The DAG's _PREAMBLE exports POSTGRES_HOST=host.docker.internal before
+# dbt runs, so inside the container this resolves correctly automatically.
+walmart_dbt:
+  outputs:
+    dev:
+      dbname: walmart_db
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      pass: admin
+      port: 5432
+      schema: bronze
+      threads: 4
+      type: postgres
+      user: postgres
+  target: dev
