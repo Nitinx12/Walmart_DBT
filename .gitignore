@@ -76,7 +76,6 @@ dist/
 # ==========================
 output/
 exports/
-reports/
 artifacts/
 
 # Generated datasets
