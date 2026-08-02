@@ -3,8 +3,14 @@
 walmart
 ├─ .dockerignore
 ├─ airflow
+│  ├─ config
+│  ├─ dags
+│  │  └─ walmart_pipeline_dag.py
+│  └─ plugins
 ├─ docker
-│  └─ Dockerfile
+│  ├─ compose.yml
+│  ├─ Dockerfile
+│  └─ Entrypoint.sh
 ├─ jars
 │  ├─ bson-5.1.4.jar
 │  ├─ bson-record-codec-5.1.4.jar
