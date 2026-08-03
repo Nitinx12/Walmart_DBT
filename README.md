@@ -23,7 +23,6 @@ SQL scripts bolted on afterward.
 > (containerized), or trigger the `walmart_medallion_pipeline` DAG in
 > Airflow. All three run the identical 7-stage, dbt-centric pipeline. Full
 > steps in [§7](#7-getting-started--connecting-the-repo).
-
 ---
 
 ## Table of contents
