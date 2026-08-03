@@ -72,6 +72,8 @@ shape for analytics, for several concrete reasons:
   to run the whole batch pipeline again — there's no incremental,
   event-driven option yet (see [§11](#11-kafka-add-on--the-planned-streaming-layer)).
 
+  <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/2608e794-126d-4722-a15a-2bd00e113ef4" />
+
 ## 2. What we built to solve it
 
 | Problem | Solution |
