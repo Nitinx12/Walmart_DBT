@@ -73,11 +73,10 @@ CROSS JOIN grand_total AS GT
 ## 4. Charts
 
 ### Revenue by Category
-<img width="1150" height="817" alt="image" src="https://github.com/user-attachments/assets/a570a9a8-8e95-4e09-9ad0-d4fe00292be5" />
-
+<img width="1500" height="900" alt="image" src="https://github.com/user-attachments/assets/880f2fc8-d386-4d97-852b-7038d2fcd840" />
 
 ### Revenue Share by Category
-<img width="1500" height="900" alt="image" src="https://github.com/user-attachments/assets/880f2fc8-d386-4d97-852b-7038d2fcd840" />
+<img width="1150" height="817" alt="image" src="https://github.com/user-attachments/assets/a570a9a8-8e95-4e09-9ad0-d4fe00292be5" />
 
 *Charts generated with `matplotlib` + `seaborn` (`whitegrid` theme, `crest` palette).*
 
