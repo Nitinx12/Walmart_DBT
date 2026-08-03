@@ -73,7 +73,7 @@ CROSS JOIN grand_total AS GT
 ## 4. Charts
 
 ### Revenue by Category
-![Category Revenue](category_revenue_bar.png)
+<img width="1500" height="900" alt="image" src="https://github.com/user-attachments/assets/880f2fc8-d386-4d97-852b-7038d2fcd840" />
 
 ### Revenue Share by Category
 ![Category Revenue Share](category_revenue_share.png)
