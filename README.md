@@ -45,8 +45,8 @@ SQL scripts bolted on afterward.
 
 ## 1. The problem
 
-Raw operational data — customers, orders, order items, products, stores,
-employees — lives in **MongoDB** as loosely-structured, mutable
+Raw operational data customers, orders, order items, products, stores,
+employees lives in **MongoDB** as loosely-structured, mutable
 collections. That's the right shape for an application; it's the wrong
 shape for analytics, for several concrete reasons:
 
