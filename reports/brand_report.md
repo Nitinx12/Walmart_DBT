@@ -20,7 +20,8 @@ This report analyzes revenue contribution by brand, based on the output of the `
 
 ## 3. Revenue by Brand
 
-![Total Revenue by Brand](reports\charts\brands\revenue_by_brand.png)
+![Total Revenue by Brand] <img width="1800" height="1100" alt="image" src="https://github.com/user-attachments/assets/79a758ca-17e6-40b1-9d2d-1aa820a59036" />
+
 
 Apple leads with **$2,984,932.71** (15.75% of total revenue), narrowly ahead of Adidas at **$2,902,704.46** (15.32%). LG and Samsung sit close together in the mid-pack (14.58% and 14.39%), while Sony, Nike, and Nestle round out the list, each contributing between 12–14% of total revenue.
 
