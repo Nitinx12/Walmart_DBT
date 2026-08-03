@@ -9,7 +9,6 @@
 ![Kafka](https://img.shields.io/badge/Kafka-on%20the%20roadmap-231F20?logo=apachekafka&logoColor=white)
 
 # DBT Powered Medallion Warehouse Walmart
-<img width="547" height="365" alt="image" src="https://github.com/user-attachments/assets/5b469373-7883-4908-af73-92748b138426" />
 
 A MongoDB → PostgreSQL → **dbt** pipeline that turns raw, operational
 Walmart-style sales data into a tested, dimensional warehouse orchestrated
