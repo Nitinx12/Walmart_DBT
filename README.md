@@ -11,7 +11,7 @@
 # DBT Powered Medallion Warehouse Walmart
 
 A MongoDB → PostgreSQL → **dbt** pipeline that turns raw, operational
-Walmart-style sales data into a tested, dimensional warehouse — orchestrated
+Walmart-style sales data into a tested, dimensional warehouse orchestrated
 by Airflow, containerized with Docker, and runnable locally with nothing
 but PowerShell and `uv`. **dbt owns every transformation from bronze
 onward**: deduplication, type-cleaning, business-rule enforcement, and the
