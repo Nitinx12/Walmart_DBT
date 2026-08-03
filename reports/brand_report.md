@@ -27,7 +27,7 @@ Apple leads with **$2,984,932.71** (15.75% of total revenue), narrowly ahead of 
 
 ## 4. Share of Total Revenue
 
-![Revenue Share Donut](revenue_share_donut.png)
+<img width="1400" height="1400" alt="image" src="https://github.com/user-attachments/assets/e19d8fe4-b4df-4084-bb4f-ef52493915c2" />
 
 No single brand dominates the portfolio. All seven brands fall within a tight **12.56%–15.75%** band, meaning revenue is fairly evenly distributed rather than concentrated in one or two names.
 
