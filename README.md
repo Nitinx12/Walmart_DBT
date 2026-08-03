@@ -8,7 +8,7 @@
 ![Medallion](https://img.shields.io/badge/Architecture-Medallion-D4AF37)
 ![Kafka](https://img.shields.io/badge/Kafka-on%20the%20roadmap-231F20?logo=apachekafka&logoColor=white)
 
-# dbt-Powered Medallion Warehouse — Walmart Sales Analytics
+# DBT Powered Medallion Warehouse Walmart
 
 A MongoDB → PostgreSQL → **dbt** pipeline that turns raw, operational
 Walmart-style sales data into a tested, dimensional warehouse — orchestrated
