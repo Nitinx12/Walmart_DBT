@@ -33,8 +33,7 @@ No single brand dominates the portfolio. All seven brands fall within a tight **
 
 ## 5. Revenue Concentration (Pareto View)
 
-<img width="1400" height="1400" alt="image" src="https://github.com/user-attachments/assets/975d9962-fda1-4507-b63a-3384c47525c3" />
-
+<img width="1800" height="1100" alt="image" src="https://github.com/user-attachments/assets/72bcc616-c282-4a52-b8bf-5475abf66101" />
 
 The cumulative curve confirms this balance: the **top 3 brands** (Apple, Adidas, LG) account for only **45.65%** of revenue — far short of an 80/20-style concentration pattern. Reaching 100% requires all seven brands, reinforcing that no brand carries outsized risk or reliance for the business.
 
