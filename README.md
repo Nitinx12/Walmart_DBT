@@ -7,7 +7,7 @@
 # Walmart Medallion Data Pipeline
 
 **MongoDB → PostgreSQL → dbt** pipeline that turns raw sales data into a
-tested, dimensional warehouse — orchestrated with **Airflow**, containerized
+tested, dimensional warehouse orchestrated with **Airflow**, containerized
 with **Docker**, and runnable locally with **PowerShell**.
 
 ## What it demonstrates
