@@ -6,25 +6,38 @@
 ![PySpark](https://img.shields.io/badge/PySpark-3.5.x-E25A1C?logo=apachespark&logoColor=white)
 ![Medallion](https://img.shields.io/badge/Architecture-Medallion-D4AF37)
 
-# ARCHITECTURE.md — Walmart Medallion Pipeline
+# Architecture — Walmart Medallion Pipeline
 
-This document is the single top-level map of the whole project: what the
-system is, how data moves through it, how the same nine-stage pipeline
-gets executed in three different ways (Windows script, standalone
-Docker image, Airflow), and how all the supporting pieces (`utils/`,
-`docker/`, `walmart_dbt/`, `tests/`) fit around that core. Each section
-links back to the detailed doc it's summarizing — this file is the
-overview, not a replacement for `docs/*.md`.
+This is the single map of the system: what it is, how data moves through
+it, how one seven-stage pipeline runs three different ways (a Windows
+script, a standalone Docker image, and an Airflow DAG), and how the
+supporting pieces — `utils/`, `docker/`, `walmart_dbt/`, `tests/` — fit
+around that core. Every section links out to the doc that covers it in
+full; this file is the overview, not a replacement for `docs/*.md`.
+
+## Contents
+
+1. [System overview](#1-system-overview)
+2. [Three runners, one pipeline](#2-three-runners-one-pipeline)
+3. [Runtime topology](#3-runtime-topology--whats-actually-running-where)
+4. [The medallion layers, and what gates each transition](#4-the-medallion-layers-and-what-gates-each-transition)
+5. [Two independent test systems](#5-two-independent-test-systems--dont-conflate-them)
+6. [Two Docker images, two jobs](#6-two-docker-images-two-jobs)
+7. [The `localhost` problem, solved once, applied twice](#7-the-localhost-problem-solved-once-applied-twice)
+8. [The `extract.py` decision engine](#8-the-extractpy-decision-engine)
+9. [Shared infrastructure — `utils/`](#9-shared-infrastructure--utils)
+10. [Repository layout](#10-repository-layout)
+11. [Where to go next](#11-where-to-go-next)
 
 ---
 
-## 1. What this project is, in one picture
+## 1. System overview
 
-A **medallion-architecture ETL pipeline** that pulls operational data out
+A **medallion-architecture ETL pipeline**: it pulls operational data out
 of MongoDB, lands it as raw bronze tables in Postgres, cleans and
 deduplicates it into silver, and reshapes it into a dimensional gold
-layer — validated by SQL checks and dbt tests at every stage, and
-runnable either directly on Windows, as a standalone Docker container, or
+layer — validated by SQL checks and dbt tests at every handoff, and
+runnable directly on Windows, as a standalone Docker container, or
 orchestrated by Airflow.
 
 ```mermaid
@@ -50,16 +63,15 @@ flowchart LR
 ```
 
 Every layer is guarded by its own tests before the next layer is allowed
-to build from it — see §4.
+to build from it — see [§4](#4-the-medallion-layers-and-what-gates-each-transition).
 
 ---
 
-## 2. The three ways to run the same pipeline
+## 2. Three runners, one pipeline
 
 The project deliberately exposes **one logical pipeline through three
 separate entry points**. They aren't three different pipelines — they're
-three runners for the same nine (or seven, depending on how you count)
-stages, kept in lockstep by convention.
+three runners for the same seven stages, kept in lockstep by convention.
 
 ```mermaid
 flowchart TD
@@ -73,7 +85,7 @@ flowchart TD
     DOCK --> STAGES
     AF --> STAGES
 
-    subgraph STAGES["Same 7 logical stages, in order"]
+    subgraph STAGES["Same 7 stages, in order"]
         direction TB
         S0["0. Preflight — pyspark/mongo-connector version check"]
         S1["1. Extract — Mongo → bronze"]
@@ -88,15 +100,15 @@ flowchart TD
 
 | | `run_pipeline.ps1` | Standalone `docker run` | Airflow DAG |
 |---|---|---|---|
-| **Where it runs** | Directly on Windows host | Any Docker host, self-contained image | `airflow-worker` container in the compose stack |
+| **Where it runs** | Directly on the Windows host | Any Docker host, self-contained image | `airflow-worker` container in the compose stack |
 | **Stop-on-failure** | Manual — every stage checks `$LASTEXITCODE`, calls `Stop-Pipeline` | Same script logic, inside the container's `main.py`/entrypoint chain | Automatic — Airflow's default `all_success` trigger rule |
 | **`.env` loading** | `Import-DotEnv` — custom line-by-line PowerShell parser | `--env-file .env` passed to `docker run` | `source .env` inside each task's shell, via the DAG's `_PREAMBLE` |
 | **`localhost` correctness** | Correct as-is — runs on the host | Corrected via env vars passed at `docker run` time | Rewritten to `host.docker.internal` in `_PREAMBLE` |
 | **Code delivery** | Already on disk | Baked in at build time (`COPY . .`) | Bind-mounted (`../..:/app`), no rebuild for code changes |
-| **Full detail** | `pipeline.md` | `docker.md` §4, §6–7 | `airflow.md` |
+| **Full detail** | [`docs/pipeline.md`](docs/pipeline.md) | [`docs/docker.md`](docs/docker.md) §4, §6–7 | [`docs/airflow.md`](docs/airflow.md) |
 
-**The rule that keeps all three honest:** if you change the stage order,
-add a stage, or change what "success" means for one, you update the
+**The rule that keeps all three honest:** changing the stage order,
+adding a stage, or redefining "success" for one means updating the
 Windows script *and* the DAG. Nothing enforces this automatically — it's
 a documented convention, not a technical guarantee.
 
@@ -142,10 +154,11 @@ flowchart TB
     RUN1 --> HOSTMONGO
 ```
 
-Two completely independent images exist because they serve two different
-purposes — see §6. Only `airflow-worker` ever executes pipeline logic;
-every other Airflow service is scheduling/serving/metadata machinery.
-Full breakdown: `docker.md` §1, `airflow.md` §1.
+Two independent images exist because they serve two different purposes
+— see [§6](#6-two-docker-images-two-jobs). Only `airflow-worker` ever
+executes pipeline logic; every other Airflow service is
+scheduling, serving, or metadata machinery. Full breakdown:
+[`docs/docker.md`](docs/docker.md) §1, [`docs/airflow.md`](docs/airflow.md) §1.
 
 ---
 
@@ -184,7 +197,8 @@ flowchart TD
 
 Each gate is enforced by exit codes, not application logic: a non-zero
 exit from any stage stops everything downstream, whether that stage is a
-Python script, a `dbt` command, or a raw SQL file. See §5 and §8.
+Python script, a `dbt` command, or a raw SQL file. See [§5](#5-two-independent-test-systems--dont-conflate-them)
+and [§8](#8-the-extractpy-decision-engine).
 
 ### 4.1 The gold layer is a snowflake, not a pure star
 
@@ -214,7 +228,7 @@ flowchart TD
     DPROD --> DCAT
 ```
 
-Full model-by-model grain, SCD type, and test list: `dbt.md` §4–5.
+Full model-by-model grain, SCD type, and test list: [`docs/dbt.md`](docs/dbt.md) §4–5.
 
 ---
 
@@ -244,10 +258,10 @@ flowchart LR
 
 | | dbt tests | Standalone SQL suite |
 |---|---|---|
-| Defined in | `schema.yml` / `scgema.yml` per model | Individual `.sql` files, one rule each |
+| Defined in | `schema.yml` per model | Individual `.sql` files, one rule each |
 | Invoked as | `dbt test --select silver` / `gold` | `uv run python scripts/sql_test.py tests/<layer>` |
 | Convention | dbt's own pass/fail semantics | Auto-detected per file: either "SELECT returns violating rows" or "DO block raises an exception" |
-| Full detail | `dbt.md` | `tests.md`, `scripts.md` §2 |
+| Full detail | [`docs/dbt.md`](docs/dbt.md) | [`docs/tests.md`](docs/tests.md), [`docs/scripts.md`](docs/scripts.md) §2 |
 
 Both are wired into every runner (`run_pipeline.ps1`, the Airflow DAG,
 `main.py` inside the standalone container) as separate pipeline stages,
@@ -274,9 +288,9 @@ flowchart TD
 
 Both images share the same JDK, `uv` install, and `PYSPARK_*`/`SPARK_*`
 env vars, so pipeline behavior is identical regardless of which runner
-triggered it — what differs is *how code gets in* (`COPY` vs bind mount)
-and *what needs correcting for a container network* (§7). Full
-rationale, Dockerfile line-by-line: `docker.md` §1–5.
+triggered it — what differs is *how code gets in* (`COPY` vs. bind mount)
+and *what needs correcting for a container network* ([§7](#7-the-localhost-problem-solved-once-applied-twice)).
+Full rationale, Dockerfile line-by-line: [`docs/docker.md`](docs/docker.md) §1–5.
 
 ---
 
@@ -303,16 +317,16 @@ flowchart TD
 Why this design: `.env` is referenced by multiple independent files
 (`run_pipeline.ps1` included), so correcting it in place would break the
 one context where it's already right. Every container-specific fix
-happens in the consuming layer instead. Full mechanics: `airflow.md` §3,
-`docker.md` §9.
+happens in the consuming layer instead. Full mechanics:
+[`docs/airflow.md`](docs/airflow.md) §3, [`docs/docker.md`](docs/docker.md) §9.
 
 ---
 
 ## 8. The `extract.py` decision engine
 
-This is the most complex single piece of logic in the project — it's
-worth its own diagram since every other stage is comparatively
-mechanical (`dbt run`, `dbt test`, or a SQL file).
+The most complex single piece of logic in the project — worth its own
+diagram since every other stage is comparatively mechanical (`dbt run`,
+`dbt test`, or a SQL file).
 
 ```mermaid
 flowchart TD
@@ -337,7 +351,7 @@ flowchart TD
 Every collection is auto-discovered from Mongo — nothing is hardcoded —
 and every run produces a Rich console report plus two Postgres control
 tables (`etl_watermarks`, `etl_logs`) for auditability. Full logic,
-including the string-vs-BSON-date watermark gotcha: `scripts.md` §1.
+including the string-vs-BSON-date watermark gotcha: [`docs/scripts.md`](docs/scripts.md) §1.
 
 ---
 
@@ -359,7 +373,7 @@ flowchart TD
 The key design choice: validation happens at **import time**, not
 lazily, so a broken `.env` fails immediately with every missing variable
 listed at once — instead of surfacing three layers deep inside a
-database driver, minutes into a run. Full detail: `utils.md`.
+database driver, minutes into a run. Full detail: [`docs/utils.md`](docs/utils.md).
 
 ---
 
@@ -389,10 +403,10 @@ walmart
 
 | Question | Doc |
 |---|---|
-| How does the Airflow DAG work, task by task? | `docs/airflow.md` |
-| What do the dbt models actually do, layer by layer? | `docs/dbt.md` |
-| How are the two Docker images built, and what broke getting them running? | `docs/docker.md` |
-| What does the Windows entry-point script do? | `docs/pipeline.md` |
-| How does `extract.py` decide incremental vs. full reload? | `docs/scripts.md` |
-| What do the raw SQL data-quality checks actually check? | `docs/tests.md` |
-| Where does config/connection/logging come from? | `docs/utils.md` |
+| How does the Airflow DAG work, task by task? | [`docs/airflow.md`](docs/airflow.md) |
+| What do the dbt models actually do, layer by layer? | [`docs/dbt.md`](docs/dbt.md) |
+| How are the two Docker images built, and what broke getting them running? | [`docs/docker.md`](docs/docker.md) |
+| What does the Windows entry-point script do? | [`docs/pipeline.md`](docs/pipeline.md) |
+| How does `extract.py` decide incremental vs. full reload? | [`docs/scripts.md`](docs/scripts.md) |
+| What do the raw SQL data-quality checks actually check? | [`docs/tests.md`](docs/tests.md) |
+| Where does config/connection/logging come from? | [`docs/utils.md`](docs/utils.md) |
