@@ -10,6 +10,9 @@
 tested, dimensional warehouse orchestrated with **Airflow**, containerized
 with **Docker**, and runnable locally with **PowerShell**.
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/c8f1afcc-9b53-4771-a4b5-2b730ea2354e" />
+
+
 ## What it demonstrates
 
 - **PySpark** incremental extraction from MongoDB (watermark-based, no full re-loads)
