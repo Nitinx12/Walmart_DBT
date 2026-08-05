@@ -34,7 +34,7 @@ per-module deep dives are in the repo:
 
 ## Full PowerShell pipeline script
 
-📄 **[View `run_pipeline.ps1` on Google Drive](PASTE_YOUR_GOOGLE_DRIVE_LINK_HERE)**
+📄 **[View `run_pipeline.ps1` on Google Drive](https://drive.google.com/file/d/1vSPYN8GvC5cFMEHf7EVjwSq4HHAbCZRF/view?usp=sharing)**
 
 ---
 
