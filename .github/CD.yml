@@ -1,0 +1,79 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Lowercase repo owner (GHCR requires it)
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── walmart-pipeline (standalone image) ──────────────────
+      - name: Metadata — walmart-pipeline
+        id: meta-pipeline
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/walmart-pipeline
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build & push walmart-pipeline
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta-pipeline.outputs.tags }}
+          labels: ${{ steps.meta-pipeline.outputs.labels }}
+          cache-from: type=gha,scope=walmart-pipeline
+          cache-to: type=gha,mode=max,scope=walmart-pipeline
+
+      # ── walmart-airflow (Airflow services image) ─────────────
+      - name: Metadata — walmart-airflow
+        id: meta-airflow
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/walmart-airflow
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build & push walmart-airflow
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.airflow
+          push: true
+          tags: ${{ steps.meta-airflow.outputs.tags }}
+          labels: ${{ steps.meta-airflow.outputs.labels }}
+          cache-from: type=gha,scope=walmart-airflow
+          cache-to: type=gha,mode=max,scope=walmart-airflow

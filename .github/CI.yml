@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  AIRFLOW_VERSION: "3.3.0"
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # 1. Lint — fast fail before anything expensive runs
+  # ────────────────────────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Ruff — lint
+        run: uv run ruff check .
+
+      - name: Ruff — format check
+        run: uv run ruff format --check .
+
+      - name: SQLFluff — dbt models + raw SQL
+        run: >
+          uv run sqlfluff lint
+          walmart_dbt/models sql/ tests/
+          --dialect postgres
+
+  # ────────────────────────────────────────────────────────────
+  # 2. Unit tests — utils/ + extract.py decision logic, mocked
+  # ────────────────────────────────────────────────────────────
+  unit-tests:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+
+      - name: Run pytest
+        run: >
+          uv run pytest tests/unit -v
+          --cov=utils --cov=scripts
+          --cov-report=term-missing
+
+  # ────────────────────────────────────────────────────────────
+  # 3. DAG integrity — the DAG must import cleanly, no cycles
+  # ────────────────────────────────────────────────────────────
+  dag-integrity:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+
+      - name: Install Airflow (constraints-pinned)
+        run: |
+          PY="$(python -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY}.txt"
+          uv pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+
+      - name: Import every DAG, fail on any import error
+        run: |
+          uv run python - <<'PY'
+          from airflow.models import DagBag
+
+          bag = DagBag(dag_folder="airflow/dags", include_examples=False)
+          assert not bag.import_errors, f"DAG import errors: {bag.import_errors}"
+          assert len(bag.dags) > 0, "No DAGs discovered in airflow/dags"
+
+          for dag_id, dag in bag.dags.items():
+              dag.test_cycle()  # raises AirflowDagCycleException if a cycle exists
+
+          print(f"OK — loaded {len(bag.dags)} DAG(s): {list(bag.dags)}")
+          PY
+
+  # ────────────────────────────────────────────────────────────
+  # 4. Docker build validation — both images must build, no push
+  # ────────────────────────────────────────────────────────────
+  docker-build:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - file: docker/Dockerfile
+            tag: walmart-pipeline:ci
+          - file: docker/Dockerfile.airflow
+            tag: walmart-airflow:ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.file }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          push: false
+          tags: ${{ matrix.tag }}
+          cache-from: type=gha,scope=${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.tag }}
+
+  # ────────────────────────────────────────────────────────────
+  # 5. Integration — the real medallion gate, against live Postgres
+  #    bronze → (3 checks) → silver → (dbt test + 9 checks) →
+  #    gold → (dbt test + 7 checks), same gate logic as run_pipeline.ps1
+  # ────────────────────────────────────────────────────────────
+  integration:
+    needs: [unit-tests, dag-integrity]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: walmart
+          POSTGRES_PASSWORD: walmart
+          POSTGRES_DB: walmart_db
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U walmart"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: walmart
+      POSTGRES_PASSWORD: walmart
+      POSTGRES_DB: walmart_db
+      DBT_PROFILES_DIR: docker/dbt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+
+      # NOTE: this assumes a `scripts/ci_seed_bronze.py` fixture loader that
+      # writes sample rows straight into the bronze schema, bypassing Mongo —
+      # see docs/ci_cd.md for why, and what it needs to do.
+      - name: Seed bronze schema from fixtures
+        run: uv run python scripts/ci_seed_bronze.py
+
+      - name: Bronze SQL checks
+        run: uv run python scripts/sql_test.py tests/bronze
+
+      - name: dbt run — silver
+        working-directory: walmart_dbt
+        run: uv run dbt run --select silver --target ci
+
+      - name: dbt test — silver
+        working-directory: walmart_dbt
+        run: uv run dbt test --select silver --target ci
+
+      - name: Silver SQL checks
+        run: uv run python scripts/sql_test.py tests/silver
+
+      - name: dbt run — gold
+        working-directory: walmart_dbt
+        run: uv run dbt run --select gold --target ci
+
+      - name: dbt test — gold
+        working-directory: walmart_dbt
+        run: uv run dbt test --select gold --target ci
+
+      - name: Gold SQL checks
+        run: uv run python scripts/sql_test.py tests/gold
