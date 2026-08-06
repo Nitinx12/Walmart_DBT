@@ -10,7 +10,7 @@
 
 A production-style **MongoDB → PostgreSQL → dbt** pipeline: incremental PySpark extraction, a tested medallion warehouse (bronze → silver → gold), orchestrated with **Airflow**, containerized with **Docker**, and gated by two independent layers of data-quality checks at every handoff.
 
-Built to mirror how a real analytics-engineering team would ship this — not a notebook demo.
+Built to mirror how a real analytics-engineering team would ship this not a notebook demo.
 
 ## Architecture at a glance
 
@@ -36,7 +36,7 @@ flowchart LR
     class GOLD gold
 ```
 
-Every arrow into silver and gold is a **quality gate**, not a formality — the next layer only builds if the prior layer's tests pass. Full breakdown: [`ARCHITECTURE.md`](ARCHITECTURE.md) §4.
+Every arrow into silver and gold is a **quality gate**, not a formality the next layer only builds if the prior layer's tests pass. Full breakdown: [`ARCHITECTURE.md`](ARCHITECTURE.md) §4.
 
 ## Orchestration — one pipeline, run three ways
 
@@ -91,7 +91,7 @@ This README is the pitch. Everything below is the engineering detail:
 
 | Doc | Covers |
 |---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Full system design — every diagram above, expanded |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Full system design every diagram above, expanded |
 | [`docs/airflow.md`](docs/airflow.md) | The DAG, task by task |
 | [`docs/dbt.md`](docs/dbt.md) | Models, grain, SCD types, tests |
 | [`docs/docker.md`](docs/docker.md) | Both images, why two, build details |
