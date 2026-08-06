@@ -41,8 +41,4 @@ per-module deep dives are in the repo:
 
 ---
 
-<<<<<<< HEAD
 📧 Reach out if you'd like a walkthrough of any part of this project.
-=======
-📧 Reach out if you'd like a walkthrough of any part of this project.
->>>>>>> d5d8790 (minor bugs fixed)
