@@ -154,11 +154,22 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      # Match utils/engine.py's actual var names exactly — POSTGRES_USERNAME
+      # and POSTGRES_DATABASE, not POSTGRES_USER/POSTGRES_DB. Values match
+      # the postgres service block above (POSTGRES_USER/PASSWORD/DB there
+      # configure the postgres image itself, a separate namespace).
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
-      POSTGRES_USER: walmart
+      POSTGRES_USERNAME: walmart
       POSTGRES_PASSWORD: walmart
-      POSTGRES_DB: walmart_db
+      POSTGRES_DATABASE: walmart_db
+      POSTGRES_SCHEMA_BRONZE: bronze
+      POSTGRES_SCHEMA_SILVER: silver
+      POSTGRES_SCHEMA_GOLD: gold
+      # engine.py hard-requires these even though CI never touches Mongo —
+      # any import of utils.connection fails without them. Dummy values only.
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DB: unused_in_ci
       DBT_PROFILES_DIR: docker/dbt
     steps:
       - uses: actions/checkout@v4

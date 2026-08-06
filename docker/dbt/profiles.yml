@@ -23,4 +23,15 @@ walmart_dbt:
       threads: 4
       type: postgres
       user: postgres
+    
+    ci:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: walmart
+      pass: walmart
+      dbname: walmart_db
+      schema: public
+      threads: 4
+      
   target: dev
