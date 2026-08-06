@@ -6,7 +6,7 @@
 ![PySpark](https://img.shields.io/badge/PySpark-3.5.x-E25A1C?logo=apachespark&logoColor=white)
 ![Medallion](https://img.shields.io/badge/Architecture-Medallion-D4AF37)
 
-# Walmart Medallion Data Pipeline
+# <img src="assets/dbt-logo.png" width="40" height="40" valign="middle"/> Walmart Medallion Data Pipeline
 
 A production-style **MongoDB → PostgreSQL → dbt** pipeline: incremental PySpark extraction, a tested medallion warehouse (bronze → silver → gold), orchestrated with **Airflow**, containerized with **Docker**, and gated by two independent layers of data-quality checks at every handoff.
 
