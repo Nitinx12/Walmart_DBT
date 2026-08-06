@@ -10,7 +10,7 @@
 
 A production-style **MongoDB → PostgreSQL → dbt** pipeline: incremental PySpark extraction, a tested medallion warehouse (bronze → silver → gold), orchestrated with **Airflow**, containerized with **Docker**, and gated by two independent layers of data-quality checks at every handoff.
 
-Built to mirror how a real analytics-engineering team would ship this not a notebook demo.
+Built to mirror how a real analytics-engineering team would ship this — not a notebook demo.
 
 ## Architecture at a glance
 
@@ -36,7 +36,7 @@ flowchart LR
     class GOLD gold
 ```
 
-Every arrow into silver and gold is a **quality gate**, not a formality the next layer only builds if the prior layer's tests pass. Full breakdown: [`ARCHITECTURE.md`](ARCHITECTURE.md) §4.
+Every arrow into silver and gold is a **quality gate**, not a formality — the next layer only builds if the prior layer's tests pass. Full breakdown: [`ARCHITECTURE.md`](ARCHITECTURE.md) §4.
 
 ## Orchestration — one pipeline, run three ways
 
@@ -59,12 +59,14 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 
 ## Highlights
 
-- **Incremental extraction** — watermark-based `$gt` pushdown from Mongo, real `MERGE`-style upserts, automatic fallback when no watermark or unique index exists
-- **17 dbt models** (9 silver + 8 gold), **100+ tests**, SCD Type 2 snapshots
-- **Two independent QA layers** — dbt-native tests *and* a standalone schema-driven SQL suite, wired in as separate pipeline stages
-- **Three runners, one contract** — Windows/PowerShell, standalone Docker image, Airflow DAG, all executing the identical 7 stages
-- **Docker Compose stack** (CeleryExecutor: scheduler, workers, triggerer, Redis) plus a self-contained pipeline image
-- **CI/CD in progress** — lint, DAG-integrity checks, and a live bronze→silver→gold run against Postgres on every PR; images published to GHCR on merge ([`docs/ci_cd.md`](docs/ci_cd.md))
+| Area | What's there |
+|---|---|
+| **Incremental extraction** | Watermark-based `$gt` pushdown from Mongo, real `MERGE`-style upserts, automatic fallback when no watermark or unique index exists |
+| **Modeling** | 17 dbt models (9 silver + 8 gold), 100+ tests, SCD Type 2 snapshots |
+| **Data quality** | Two independent QA layers — dbt-native tests *and* a standalone schema-driven SQL suite — wired in as separate pipeline stages |
+| **Runners** | Windows/PowerShell, standalone Docker image, Airflow DAG — all executing the identical 7 stages |
+| **Containerization** | Docker Compose stack (CeleryExecutor: scheduler, workers, triggerer, Redis) plus a self-contained pipeline image |
+| **CI/CD** *(in progress)* | Lint, DAG-integrity checks, and a live bronze→silver→gold run against Postgres on every PR; images published to GHCR on merge — [`docs/ci_cd.md`](docs/ci_cd.md) |
 
 ## Tech stack
 
