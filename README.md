@@ -3,6 +3,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![PySpark](https://img.shields.io/badge/PySpark-3.5.x-E25A1C?logo=apachespark&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-in%20progress-FFC107?logo=githubactions&logoColor=white)
 
 # Walmart Medallion Data Pipeline
 
@@ -21,6 +22,10 @@ with **Docker**, and runnable locally with **PowerShell**.
 - **Docker Compose** stack (CeleryExecutor) + standalone container image
 - **PowerShell** automation script with a data-quality gate
 - Independent SQL test suite as a second layer of data-quality checks
+- **GitHub Actions CI/CD** *(in progress)* — lint, DAG-integrity checks, and
+  a full bronze → silver → gold integration run against a live Postgres
+  service container on every PR, with Docker images published to GHCR on
+  merge. See [`docs/ci_cd.md`](docs/ci_cd.md).
 
 ## Tech stack
 
