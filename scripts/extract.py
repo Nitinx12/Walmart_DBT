@@ -74,7 +74,7 @@ import traceback
 import uuid
 import warnings
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from rich import box
@@ -752,7 +752,7 @@ def process_collection(
     watermark_column_override: str | None,
 ) -> CollectionResult:
     start = time.time()
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
     result = CollectionResult(name=collection)
 
     try:
@@ -902,7 +902,7 @@ def process_collection(
         log.error(f"[{collection}] extraction failed: {result.error}")
     finally:
         result.seconds = time.time() - start
-        finished_at = datetime.now(timezone.utc)
+        finished_at = datetime.now(UTC)
         insert_log(pg_engine, run_id, started_at, finished_at, result)
 
     return result
@@ -924,7 +924,7 @@ def render_report(
             "[bold]MongoDB -> PostgreSQL Extraction Report[/bold]\n"
             f"Database: [cyan]{config.MONGO_DB}[/cyan]  →  Schema: [cyan]{POSTGRES_SCHEMA}[/cyan]\n"
             f"Run ID: [magenta]{run_id}[/magenta]\n"
-            f"Run finished: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            f"Run finished: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}"
             + ("  [yellow](DRY RUN - no data written)[/yellow]" if dry_run else ""),
             border_style="cyan",
         )
@@ -1147,7 +1147,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     start = time.time()
-    run_id = f"{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
+    run_id = f"{datetime.now(UTC):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
 
     console.rule(
         "[bold cyan]mongo_exp: MongoDB -> PostgreSQL incremental extraction[/bold cyan]"
