@@ -15,19 +15,27 @@ WITH source_brands AS (
 
 new_brands AS (
 
-    SELECT brand_name
-    FROM source_brands
+    SELECT sb.brand_name
+    FROM source_brands AS sb
     {% if is_incremental() %}
-        WHERE brand_name NOT IN (SELECT brand_name FROM {{ this }})
+        WHERE sb.brand_name NOT IN (
+            SELECT t.brand_name FROM {{ this }} AS t
+        )
     {% endif %}
 
 )
 
 SELECT
     {% if is_incremental() %}
-        (SELECT COALESCE(MAX(brand_id), 0) FROM {{ this }}) +
+        (
+            SELECT COALESCE(MAX(t.brand_id), 0)
+            FROM {{ this }} AS t
+        )
+        +
     {% endif %}
-    ROW_NUMBER() OVER (ORDER BY brand_name) AS brand_id,
-    brand_name,
+    ROW_NUMBER() OVER (
+        ORDER BY nb.brand_name
+    ) AS brand_id,
+    nb.brand_name,
     CURRENT_TIMESTAMP AS silver_loaded_at
-FROM new_brands
+FROM new_brands AS nb

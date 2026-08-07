@@ -12,16 +12,16 @@
 WITH source_orders AS (
 
     SELECT
-        order_id,
-        store_id,
-        customer_id,
-        payment_method_id,
-        order_status,
-        is_active,
-        total_amount,
-        order_timestamp,
-        created_timestamp,
-        updated_timestamp
+        so.order_id,
+        so.store_id,
+        so.customer_id,
+        so.payment_method_id,
+        so.order_status,
+        so.is_active,
+        so.total_amount,
+        so.order_timestamp,
+        so.created_timestamp,
+        so.updated_timestamp
     FROM {{ ref('orders') }} AS so
 
     {% if is_incremental() %}

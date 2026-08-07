@@ -23,7 +23,10 @@ WITH incremental_filter AS (
     {% if is_incremental() %}
         WHERE updated_timestamp::TIMESTAMP >= (
             COALESCE(
-                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                (
+                    SELECT MAX(t.updated_timestamp::TIMESTAMP)
+                    FROM {{ this }} AS t
+                ),
                 TIMESTAMP '1900-01-01'
             ) - INTERVAL '3 days'
         )
@@ -73,12 +76,14 @@ cleaned AS (
         CASE
             -- a valid NANP number always has exactly 10 significant digits;
             -- whatever junk precedes them (+1-, 001-, nothing) is discarded
-            -- by always taking the rightmost 10 digits
+            -- by always taking the rightmost 10 digits.
+            -- fewer than 10 digits = not a valid number, flagged as NULL
+            -- rather than stored as garbage
             WHEN LENGTH(phone_digits) >= 10
                 THEN
                     '+1-' || SUBSTRING(RIGHT(phone_digits, 10), 1, 3) || '-'
                     || SUBSTRING(RIGHT(phone_digits, 10), 4, 3) || '-'
-                    || SUBSTRING(RIGHT(phone_digits, 10), 7, 4)  -- fewer than 10 digits = not a valid number, flagged as NULL rather than stored as garbage
+                    || SUBSTRING(RIGHT(phone_digits, 10), 7, 4)
         END AS phone,
         NULLIF(phone_ext_digits, '') AS phone_extension,
         TRIM(email::VARCHAR)::VARCHAR AS email,
@@ -94,4 +99,17 @@ cleaned AS (
     FROM phone_digits
 )
 
-SELECT * FROM cleaned
+SELECT
+    created_timestamp,
+    updated_timestamp,
+    customer_id,
+    customer_name,
+    phone,
+    phone_extension,
+    email,
+    is_active,
+    city,
+    province,
+    country,
+    silver_loaded_at
+FROM cleaned

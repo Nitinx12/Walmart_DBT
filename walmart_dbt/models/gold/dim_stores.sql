@@ -8,14 +8,14 @@
 WITH source_stores AS (
 
     SELECT
-        store_id,
-        store_name,
-        city,
-        province,
-        country,
-        is_active,
-        created_timestamp,
-        updated_timestamp
+        ss.store_id,
+        ss.store_name,
+        ss.city,
+        ss.province,
+        ss.country,
+        ss.is_active,
+        ss.created_timestamp,
+        ss.updated_timestamp
     FROM {{ ref('stores') }} AS ss
 
     {% if is_incremental() %}

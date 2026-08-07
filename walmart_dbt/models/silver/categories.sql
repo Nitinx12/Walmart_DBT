@@ -15,19 +15,27 @@ WITH source_categories AS (
 
 new_categories AS (
 
-    SELECT category_name
-    FROM source_categories
+    SELECT sc.category_name
+    FROM source_categories AS sc
     {% if is_incremental() %}
-        WHERE category_name NOT IN (SELECT category_name FROM {{ this }})
+        WHERE sc.category_name NOT IN (
+            SELECT t.category_name FROM {{ this }} AS t
+        )
     {% endif %}
 
 )
 
 SELECT
     {% if is_incremental() %}
-        (SELECT COALESCE(MAX(category_id), 0) FROM {{ this }}) +
+        (
+            SELECT COALESCE(MAX(t.category_id), 0)
+            FROM {{ this }} AS t
+        )
+        +
     {% endif %}
-    ROW_NUMBER() OVER (ORDER BY category_name) AS category_id,
-    category_name,
+    ROW_NUMBER() OVER (
+        ORDER BY nc.category_name
+    ) AS category_id,
+    nc.category_name,
     CURRENT_TIMESTAMP AS silver_loaded_at
-FROM new_categories
+FROM new_categories AS nc

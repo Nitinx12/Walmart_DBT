@@ -11,14 +11,14 @@
 WITH source_products AS (
 
     SELECT
-        product_id,
-        product_name,
-        brand_id,
-        category_id,
-        is_active,
-        price,
-        created_timestamp,
-        updated_timestamp
+        sp.product_id,
+        sp.product_name,
+        sp.brand_id,
+        sp.category_id,
+        sp.is_active,
+        sp.price,
+        sp.created_timestamp,
+        sp.updated_timestamp
     FROM {{ ref('products') }} AS sp
 
     {% if is_incremental() %}

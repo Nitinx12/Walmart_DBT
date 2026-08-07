@@ -11,15 +11,15 @@
 WITH source_order_items AS (
 
     SELECT
-        order_item_id,
-        order_id,
-        product_id,
-        is_active,
-        quantity,
-        unit_price,
-        line_amount,
-        created_timestamp,
-        updated_timestamp
+        soi.order_item_id,
+        soi.order_id,
+        soi.product_id,
+        soi.is_active,
+        soi.quantity,
+        soi.unit_price,
+        soi.line_amount,
+        soi.created_timestamp,
+        soi.updated_timestamp
     FROM {{ ref('order_items') }} AS soi
 
     {% if is_incremental() %}

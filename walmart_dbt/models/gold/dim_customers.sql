@@ -8,17 +8,17 @@
 WITH source_customers AS (
 
     SELECT
-        customer_id,
-        customer_name,
-        phone,
-        phone_extension,
-        email,
-        is_active,
-        city,
-        province,
-        country,
-        created_timestamp,
-        updated_timestamp
+        sc.customer_id,
+        sc.customer_name,
+        sc.phone,
+        sc.phone_extension,
+        sc.email,
+        sc.is_active,
+        sc.city,
+        sc.province,
+        sc.country,
+        sc.created_timestamp,
+        sc.updated_timestamp
     FROM {{ ref('customers') }} AS sc
 
     {% if is_incremental() %}

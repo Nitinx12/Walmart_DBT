@@ -20,7 +20,10 @@ WITH incremental_filter AS (
     {% if is_incremental() %}
         WHERE updated_timestamp::TIMESTAMP >= (
             COALESCE(
-                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                (
+                    SELECT MAX(t.updated_timestamp::TIMESTAMP)
+                    FROM {{ this }} AS t
+                ),
                 TIMESTAMP '1900-01-01'
             ) - INTERVAL '3 days'
         )

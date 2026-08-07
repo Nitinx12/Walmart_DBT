@@ -15,12 +15,12 @@ WITH source_methods AS (
 
 new_methods AS (
 
-    SELECT payment_method_name
-    FROM source_methods
+    SELECT sm.payment_method_name
+    FROM source_methods AS sm
     {% if is_incremental() %}
         WHERE
-            payment_method_name NOT IN (
-                SELECT payment_method_name FROM {{ this }}
+            sm.payment_method_name NOT IN (
+                SELECT t.payment_method_name FROM {{ this }} AS t
             )
     {% endif %}
 
@@ -28,9 +28,15 @@ new_methods AS (
 
 SELECT
     {% if is_incremental() %}
-        (SELECT COALESCE(MAX(payment_method_id), 0) FROM {{ this }}) +
+        (
+            SELECT COALESCE(MAX(t.payment_method_id), 0)
+            FROM {{ this }} AS t
+        )
+        +
     {% endif %}
-    ROW_NUMBER() OVER (ORDER BY payment_method_name) AS payment_method_id,
-    payment_method_name,
+    ROW_NUMBER() OVER (
+        ORDER BY nm.payment_method_name
+    ) AS payment_method_id,
+    nm.payment_method_name,
     CURRENT_TIMESTAMP AS silver_loaded_at
-FROM new_methods
+FROM new_methods AS nm
