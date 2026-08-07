@@ -35,58 +35,67 @@ Created On  : 2026-08-06
 
 WITH customer_base AS (
     SELECT
-        'Total Customers'           AS measure_name,
+        'Total Customers' AS measure_name,
         COUNT(DISTINCT customer_id) AS measure_value
     FROM gold.dim_customers
 ),
+
 product_base AS (
     SELECT
-        'Total Products'             AS measure_name,
-        COUNT(DISTINCT product_id)   AS measure_value
+        'Total Products' AS measure_name,
+        COUNT(DISTINCT product_id) AS measure_value
     FROM gold.dim_products
 ),
+
 order_base AS (
     SELECT
-        'Total Orders'              AS measure_name,
-        COUNT(DISTINCT order_id)    AS measure_value
+        'Total Orders' AS measure_name,
+        COUNT(DISTINCT order_id) AS measure_value
     FROM gold.dim_orders
 ),
+
 order_customer_base AS (
     SELECT
-        'Total Order Customers'      AS measure_name,
-        COUNT(DISTINCT customer_id)  AS measure_value
+        'Total Order Customers' AS measure_name,
+        COUNT(DISTINCT customer_id) AS measure_value
     FROM gold.dim_orders
 ),
+
 quantity_sold_base AS (
     SELECT
-        'Quantity Sold'             AS measure_name,
-        SUM(quantity)               AS measure_value
+        'Quantity Sold' AS measure_name,
+        SUM(quantity) AS measure_value
     FROM gold.fact_order_items
 ),
+
 avg_quantity_base AS (
     SELECT
-        'Average Quantity Sold'     AS measure_name,
-        ROUND(AVG(quantity), 2)     AS measure_value
+        'Average Quantity Sold' AS measure_name,
+        ROUND(AVG(quantity), 2) AS measure_value
     FROM gold.fact_order_items
 ),
+
 avg_price_base AS (
     SELECT
-        'Average Unit Price'        AS measure_name,
-        ROUND(AVG(unit_price), 2)   AS measure_value
+        'Average Unit Price' AS measure_name,
+        ROUND(AVG(unit_price), 2) AS measure_value
     FROM gold.fact_order_items
 ),
+
 total_sales_base AS (
     SELECT
-        'Total Sales'               AS measure_name,
-        ROUND(SUM(line_amount), 2)  AS measure_value
+        'Total Sales' AS measure_name,
+        ROUND(SUM(line_amount), 2) AS measure_value
     FROM gold.fact_order_items
 ),
+
 avg_sales_base AS (
     SELECT
-        'Average Sales Per Line'    AS measure_name,
-        ROUND(AVG(line_amount), 2)  AS measure_value
+        'Average Sales Per Line' AS measure_name,
+        ROUND(AVG(line_amount), 2) AS measure_value
     FROM gold.fact_order_items
 )
+
 SELECT * FROM customer_base
 UNION ALL
 SELECT * FROM product_base

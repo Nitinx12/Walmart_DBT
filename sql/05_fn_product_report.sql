@@ -72,37 +72,37 @@
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION fn_product_report(
-    p_schema                        TEXT        DEFAULT 'public',
-    p_product_id                    INTEGER     DEFAULT NULL,
-    p_category_id                   BIGINT      DEFAULT NULL,
-    p_brand_id                      BIGINT      DEFAULT NULL,
-    p_category_name                 VARCHAR     DEFAULT NULL,
-    p_brand_name                    VARCHAR     DEFAULT NULL,
-    p_is_active                     BOOLEAN     DEFAULT NULL,
-    p_include_inactive_items        BOOLEAN     DEFAULT FALSE,
-    p_start_date                    DATE        DEFAULT NULL,
-    p_end_date                      DATE        DEFAULT NULL,
-    p_min_price                     NUMERIC     DEFAULT NULL,
-    p_max_price                     NUMERIC     DEFAULT NULL,
-    p_sort_by                       TEXT        DEFAULT 'total_revenue',
-    p_sort_direction                TEXT        DEFAULT 'DESC',
-    p_limit                         INTEGER     DEFAULT NULL
+    p_schema TEXT DEFAULT 'public',
+    p_product_id INTEGER DEFAULT NULL,
+    p_category_id BIGINT DEFAULT NULL,
+    p_brand_id BIGINT DEFAULT NULL,
+    p_category_name VARCHAR DEFAULT NULL,
+    p_brand_name VARCHAR DEFAULT NULL,
+    p_is_active BOOLEAN DEFAULT NULL,
+    p_include_inactive_items BOOLEAN DEFAULT FALSE,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_min_price NUMERIC DEFAULT NULL,
+    p_max_price NUMERIC DEFAULT NULL,
+    p_sort_by TEXT DEFAULT 'total_revenue',
+    p_sort_direction TEXT DEFAULT 'DESC',
+    p_limit INTEGER DEFAULT NULL
 )
 RETURNS TABLE (
-    product_id                  INTEGER,
-    product_name                VARCHAR,
-    brand_name                  TEXT,
-    category_name               TEXT,
-    price                       NUMERIC(14,2),
-    is_active                   BOOLEAN,
-    total_orders                INTEGER,
-    total_quantity_sold         BIGINT,
-    total_revenue               NUMERIC(14,2),
-    avg_selling_price           NUMERIC(14,2),
-    price_variance              NUMERIC(14,2),
-    first_sold_date             TIMESTAMP,
-    last_sold_date              TIMESTAMP,
-    days_since_last_sale        INTEGER
+    product_id INTEGER,
+    product_name VARCHAR,
+    brand_name TEXT,
+    category_name TEXT,
+    price NUMERIC(14, 2),
+    is_active BOOLEAN,
+    total_orders INTEGER,
+    total_quantity_sold BIGINT,
+    total_revenue NUMERIC(14, 2),
+    avg_selling_price NUMERIC(14, 2),
+    price_variance NUMERIC(14, 2),
+    first_sold_date TIMESTAMP,
+    last_sold_date TIMESTAMP,
+    days_since_last_sale INTEGER
 )
 LANGUAGE plpgsql
 AS $function$

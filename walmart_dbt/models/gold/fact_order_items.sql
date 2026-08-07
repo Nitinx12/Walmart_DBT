@@ -20,15 +20,15 @@ WITH source_order_items AS (
         line_amount,
         created_timestamp,
         updated_timestamp
-    FROM {{ ref('order_items') }}
+    FROM {{ ref('order_items') }} AS soi
 
     {% if is_incremental() %}
-    WHERE updated_timestamp >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE soi.updated_timestamp >= (
+            COALESCE(
+                (SELECT MAX(t.updated_timestamp) FROM {{ this }} AS t),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 
 )

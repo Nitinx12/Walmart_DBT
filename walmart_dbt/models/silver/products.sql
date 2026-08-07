@@ -18,14 +18,15 @@ WITH incremental_filter AS (
         _id
     FROM {{ source('bronze', 'products') }}
     {% if is_incremental() %}
-    WHERE updated_timestamp::TIMESTAMP >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE updated_timestamp::TIMESTAMP >= (
+            COALESCE(
+                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 ),
+
 deduplicated AS (
     SELECT
         *,
@@ -38,26 +39,28 @@ deduplicated AS (
         ) AS rnk
     FROM incremental_filter
 ),
+
 cleaned AS (
     SELECT
-        TRIM(d.product_id::VARCHAR)::INT                    AS product_id,
-        TRIM(d.product_name::VARCHAR)::VARCHAR              AS product_name,
         b.brand_id,
         c.category_id,
+        d.created_timestamp::TIMESTAMP AS created_timestamp,
+        d.updated_timestamp::TIMESTAMP AS updated_timestamp,
+        TRIM(d.product_id::VARCHAR)::INT AS product_id,
+        TRIM(d.product_name::VARCHAR)::VARCHAR AS product_name,
         CASE
             WHEN d.is_active IS NULL THEN NULL
             WHEN UPPER(TRIM(d.is_active)) = 'Y' THEN TRUE
             ELSE FALSE
-        END                                                AS is_active,
-        TRIM(d.price::VARCHAR)::NUMERIC                    AS price,
-        d.created_timestamp::TIMESTAMP                     AS created_timestamp,
-        d.updated_timestamp::TIMESTAMP                     AS updated_timestamp,
-        CURRENT_TIMESTAMP                                  AS silver_loaded_at
-    FROM deduplicated d
-    LEFT JOIN {{ ref('brands') }} b
+        END AS is_active,
+        TRIM(d.price::VARCHAR)::NUMERIC AS price,
+        CURRENT_TIMESTAMP AS silver_loaded_at
+    FROM deduplicated AS d
+    LEFT JOIN {{ ref('brands') }} AS b
         ON INITCAP(TRIM(d.brand::VARCHAR)) = b.brand_name
-    LEFT JOIN {{ ref('categories') }} c
+    LEFT JOIN {{ ref('categories') }} AS c
         ON INITCAP(TRIM(d.category::VARCHAR)) = c.category_name
     WHERE d.rnk = 1
 )
+
 SELECT * FROM cleaned

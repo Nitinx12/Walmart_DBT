@@ -30,20 +30,21 @@ Created On  : 2026-08-06
 
 WITH customer_base AS (
     SELECT
-        O.customer_id,
-        SUM(OI.line_amount)             AS total_revenue,
-        COUNT(DISTINCT O.order_id)      AS total_orders,
+        o.customer_id,
+        SUM(oi.line_amount) AS total_revenue,
+        COUNT(DISTINCT o.order_id) AS total_orders,
         ROUND(
-            SUM(OI.line_amount) /
-            NULLIF(COUNT(DISTINCT O.order_id), 0),
+            SUM(oi.line_amount)
+            / NULLIF(COUNT(DISTINCT o.order_id), 0),
             2
-        )                               AS avg_order_value
-    FROM gold.dim_orders AS O
-    INNER JOIN gold.fact_order_items AS OI
-        ON O.order_id = OI.order_id
+        ) AS avg_order_value
+    FROM gold.dim_orders AS o
+    INNER JOIN gold.fact_order_items AS oi
+        ON o.order_id = oi.order_id
     GROUP BY
-        O.customer_id
+        o.customer_id
 ),
+
 segment_base AS (
     SELECT
         customer_id,
@@ -58,18 +59,20 @@ segment_base AS (
         END AS customer_segment
     FROM customer_base
 ),
+
 summary_base AS (
     SELECT
         customer_segment,
-        COUNT(customer_id)                          AS total_customers,
-        ROUND(SUM(total_revenue), 2)                AS total_revenue,
-        ROUND(AVG(total_revenue), 2)                AS avg_revenue_per_customer,
-        SUM(total_orders)                           AS total_orders,
-        ROUND(AVG(avg_order_value), 2)              AS avg_order_value
+        COUNT(customer_id) AS total_customers,
+        ROUND(SUM(total_revenue), 2) AS total_revenue,
+        ROUND(AVG(total_revenue), 2) AS avg_revenue_per_customer,
+        SUM(total_orders) AS total_orders,
+        ROUND(AVG(avg_order_value), 2) AS avg_order_value
     FROM segment_base
     GROUP BY
         customer_segment
 )
+
 SELECT
     customer_segment,
     total_customers,
@@ -78,13 +81,13 @@ SELECT
     total_orders,
     avg_order_value,
     ROUND(
-        total_revenue * 100.0 /
-        SUM(total_revenue) OVER (),
+        total_revenue * 100.0
+        / SUM(total_revenue) OVER (),
         2
     ) AS revenue_percentage,
     ROUND(
-        total_customers * 100.0 /
-        SUM(total_customers) OVER (),
+        total_customers * 100.0
+        / SUM(total_customers) OVER (),
         2
     ) AS customer_percentage
 FROM summary_base

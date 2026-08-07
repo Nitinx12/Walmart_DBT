@@ -32,60 +32,67 @@ Created On  : 2026-08-03
 
 WITH base_query AS (
     SELECT
-        INITCAP(P.payment_method_name)                          AS payment_method_name,
-        COUNT(DISTINCT O.customer_id)                           AS distinct_customers,
-        COUNT(O.order_id)                                       AS total_orders,
-        SUM(O.total_amount)                                     AS total_revenue,
-        AVG(O.total_amount)                                     AS avg_order_value,
-        MIN(O.total_amount)                                     AS min_order_value,
-        MAX(O.total_amount)                                     AS max_order_value,
-        COUNT(*) FILTER (WHERE O.is_active = FALSE)             AS inactive_order_count
-    FROM gold.dim_payment_methods AS P
-    LEFT JOIN gold.dim_orders AS O
-        ON P.payment_method_id = O.payment_method_id
-    GROUP BY P.payment_method_name
+        INITCAP(p.payment_method_name) AS payment_method_name,
+        COUNT(DISTINCT o.customer_id) AS distinct_customers,
+        COUNT(o.order_id) AS total_orders,
+        SUM(o.total_amount) AS total_revenue,
+        AVG(o.total_amount) AS avg_order_value,
+        MIN(o.total_amount) AS min_order_value,
+        MAX(o.total_amount) AS max_order_value,
+        COUNT(*) FILTER (WHERE o.is_active = FALSE) AS inactive_order_count
+    FROM gold.dim_payment_methods AS p
+    LEFT JOIN gold.dim_orders AS o
+        ON p.payment_method_id = o.payment_method_id
+    GROUP BY p.payment_method_name
 ),
+
 overall_agg AS MATERIALIZED (
     SELECT
-        'ALL PAYMENT METHODS'::varchar                          AS payment_method_name,
-        COUNT(DISTINCT customer_id)                             AS distinct_customers,
-        COUNT(*)                                                AS total_orders,
-        SUM(total_amount)                                       AS total_revenue,
-        AVG(total_amount)                                       AS avg_order_value,
-        MIN(total_amount)                                       AS min_order_value,
-        MAX(total_amount)                                       AS max_order_value,
-        COUNT(*) FILTER (WHERE is_active = FALSE)               AS inactive_order_count
+        'ALL PAYMENT METHODS'::varchar AS payment_method_name,
+        COUNT(DISTINCT customer_id) AS distinct_customers,
+        COUNT(*) AS total_orders,
+        SUM(total_amount) AS total_revenue,
+        AVG(total_amount) AS avg_order_value,
+        MIN(total_amount) AS min_order_value,
+        MAX(total_amount) AS max_order_value,
+        COUNT(*) FILTER (WHERE is_active = FALSE) AS inactive_order_count
     FROM gold.dim_orders
 ),
+
 combined AS (
-    SELECT *, 0 AS sort_order
+    SELECT
+        *,
+        0 AS sort_order
     FROM base_query
 
     UNION ALL
 
-    SELECT *, 1 AS sort_order
+    SELECT
+        *,
+        1 AS sort_order
     FROM overall_agg
 )
+
 SELECT
     payment_method_name,
     distinct_customers,
     total_orders,
+    min_order_value,
+    max_order_value,
+    inactive_order_count,
     ROUND(
-        100.0 * total_orders /
-        NULLIF((SELECT total_orders FROM overall_agg), 0),
+        100.0 * total_orders
+        / NULLIF((SELECT total_orders FROM overall_agg), 0),
         2
     ) AS pct_of_all_orders,
     ROUND(total_revenue, 2) AS total_revenue,
     ROUND(
-        100.0 * total_revenue /
-        NULLIF((SELECT total_revenue FROM overall_agg), 0),
+        100.0 * total_revenue
+        / NULLIF((SELECT total_revenue FROM overall_agg), 0),
         2
     ) AS pct_of_total_revenue,
-    ROUND(avg_order_value, 2) AS avg_order_value,
-    min_order_value,
-    max_order_value,
-    inactive_order_count
+    ROUND(avg_order_value, 2) AS avg_order_value
 FROM combined
 ORDER BY
-    sort_order,
+    sort_order ASC,
     total_orders DESC;

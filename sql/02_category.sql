@@ -15,29 +15,29 @@ Description:
 ===============================================================================
 */
 
-WITH cate_base AS(
+WITH cate_base AS (
     SELECT
-        C.category_id,
-        C.category_name,
-        SUM(OI.line_amount) AS total_amount
-    FROM gold.dim_categories AS C
-    LEFT JOIN gold.dim_products AS P
-        ON P.category_id = C.category_id
-    LEFT JOIN gold.fact_order_items AS OI
-        ON OI.product_id = P.product_id
+        c.category_id,
+        c.category_name,
+        SUM(oi.line_amount) AS total_amount
+    FROM gold.dim_categories AS c
+    LEFT JOIN gold.dim_products AS p
+        ON c.category_id = p.category_id
+    LEFT JOIN gold.fact_order_items AS oi
+        ON p.product_id = oi.product_id
     GROUP BY
-        C.category_id,
-        C.category_name
+        c.category_id,
+        c.category_name
 ),
-grand_total AS(
+
+grand_total AS (
     SELECT SUM(total_amount) AS grand_revenue
     FROM cate_base
 )
+
 SELECT
-    C.category_name,
-    C.total_amount,
-    ROUND(C.total_amount / GT.grand_revenue * 100,2) AS pct_of_total
-FROM cate_base AS C
-CROSS JOIN grand_total AS GT
-
-
+    c.category_name,
+    c.total_amount,
+    ROUND(c.total_amount / gt.grand_revenue * 100, 2) AS pct_of_total
+FROM cate_base AS c
+CROSS JOIN grand_total AS gt

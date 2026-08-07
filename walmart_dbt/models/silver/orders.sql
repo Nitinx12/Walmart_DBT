@@ -21,15 +21,16 @@ WITH incremental_filter AS (
     FROM {{ source('bronze', 'orders') }}
 
     {% if is_incremental() %}
-    WHERE updated_timestamp::TIMESTAMP >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE updated_timestamp::TIMESTAMP >= (
+            COALESCE(
+                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 
 ),
+
 deduplicated AS (
     SELECT
         *,
@@ -43,26 +44,28 @@ deduplicated AS (
     FROM incremental_filter
 
 ),
+
 cleaned AS (
     SELECT
-        TRIM(d.order_id::VARCHAR)::INT                  AS order_id,
-        TRIM(d.store_id::VARCHAR)::INT                  AS store_id,
-        TRIM(d.customer_id::VARCHAR)::INT               AS customer_id,
-        TRIM(d.order_status::VARCHAR)::VARCHAR          AS order_status,
+        pm.payment_method_id,
+        d.order_timestamp::TIMESTAMP AS order_timestamp,
+        d.created_timestamp::TIMESTAMP AS created_timestamp,
+        d.updated_timestamp::TIMESTAMP AS updated_timestamp,
+        TRIM(d.order_id::VARCHAR)::INT AS order_id,
+        TRIM(d.store_id::VARCHAR)::INT AS store_id,
+        TRIM(d.customer_id::VARCHAR)::INT AS customer_id,
+        TRIM(d.order_status::VARCHAR)::VARCHAR AS order_status,
         CASE
             WHEN d.is_active IS NULL THEN NULL
             WHEN UPPER(TRIM(d.is_active)) = 'Y' THEN TRUE
             ELSE FALSE
-        END                                             AS is_active,
-        pm.payment_method_id,
-        TRIM(d.total_amount::VARCHAR)::NUMERIC          AS total_amount,
-        d.order_timestamp::TIMESTAMP                    AS order_timestamp,
-        d.created_timestamp::TIMESTAMP                  AS created_timestamp,
-        d.updated_timestamp::TIMESTAMP                  AS updated_timestamp,
-        CURRENT_TIMESTAMP                               AS silver_loaded_at
-    FROM deduplicated d
-    LEFT JOIN {{ ref('payment_methods') }} pm
+        END AS is_active,
+        TRIM(d.total_amount::VARCHAR)::NUMERIC AS total_amount,
+        CURRENT_TIMESTAMP AS silver_loaded_at
+    FROM deduplicated AS d
+    LEFT JOIN {{ ref('payment_methods') }} AS pm
         ON UPPER(TRIM(d.payment_method::VARCHAR)) = pm.payment_method_name
     WHERE d.rnk = 1
 )
+
 SELECT * FROM cleaned

@@ -18,14 +18,15 @@ WITH incremental_filter AS (
         _id
     FROM {{ source('bronze', 'stores') }}
     {% if is_incremental() %}
-    WHERE updated_timestamp::TIMESTAMP >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE updated_timestamp::TIMESTAMP >= (
+            COALESCE(
+                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 ),
+
 deduplicated AS (
     SELECT
         *,
@@ -38,22 +39,24 @@ deduplicated AS (
         ) AS rnk
     FROM incremental_filter
 ),
+
 cleaned AS (
     SELECT
-        TRIM(store_id::VARCHAR)::INT                    AS store_id,
-        TRIM(store_name::VARCHAR)::VARCHAR              AS store_name,
-        TRIM(city::VARCHAR)::VARCHAR                    AS city,
-        TRIM(province::VARCHAR)::VARCHAR                AS province,
-        TRIM(country::VARCHAR)::VARCHAR                 AS country,
+        created_timestamp::TIMESTAMP AS created_timestamp,
+        updated_timestamp::TIMESTAMP AS updated_timestamp,
+        TRIM(store_id::VARCHAR)::INT AS store_id,
+        TRIM(store_name::VARCHAR)::VARCHAR AS store_name,
+        TRIM(city::VARCHAR)::VARCHAR AS city,
+        TRIM(province::VARCHAR)::VARCHAR AS province,
+        TRIM(country::VARCHAR)::VARCHAR AS country,
         CASE
             WHEN is_active IS NULL THEN NULL
             WHEN UPPER(TRIM(is_active)) = 'Y' THEN TRUE
             ELSE FALSE
-        END                                             AS is_active,
-        created_timestamp::TIMESTAMP                    AS created_timestamp,
-        updated_timestamp::TIMESTAMP                    AS updated_timestamp,
-        CURRENT_TIMESTAMP                               AS silver_loaded_at
+        END AS is_active,
+        CURRENT_TIMESTAMP AS silver_loaded_at
     FROM deduplicated
     WHERE rnk = 1
 )
+
 SELECT * FROM cleaned

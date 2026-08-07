@@ -99,9 +99,9 @@ $function$;
 -- ============================================================================
 
 CREATE OR REPLACE PROCEDURE sp_attach_loaded_at_triggers(
-    p_schema            TEXT,
-    p_loaded_at_column  TEXT,
-    p_trigger_function  TEXT
+    p_schema TEXT,
+    p_loaded_at_column TEXT,
+    p_trigger_function TEXT
 )
 LANGUAGE plpgsql
 AS $procedure$

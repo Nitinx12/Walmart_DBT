@@ -27,11 +27,13 @@ WITH orders_2026 AS (
     FROM gold.dim_orders
     WHERE EXTRACT(YEAR FROM order_timestamp) = 2026
 ),
+
 orders_2027 AS (
     SELECT DISTINCT customer_id
     FROM gold.dim_orders
     WHERE EXTRACT(YEAR FROM order_timestamp) = 2027
 ),
+
 loyal_customers AS (
     SELECT customer_id
     FROM orders_2026
@@ -41,6 +43,7 @@ loyal_customers AS (
     SELECT customer_id
     FROM orders_2027
 ),
+
 new_customers AS (
     SELECT customer_id FROM orders_2027
 
@@ -48,6 +51,7 @@ new_customers AS (
 
     SELECT customer_id FROM orders_2026
 ),
+
 lost_customers AS (
     SELECT customer_id FROM orders_2026
 
@@ -55,6 +59,7 @@ lost_customers AS (
 
     SELECT customer_id FROM orders_2027
 ),
+
 active_customers AS (
     SELECT customer_id FROM loyal_customers
 
@@ -62,6 +67,7 @@ active_customers AS (
 
     SELECT customer_id FROM new_customers
 )
+
 SELECT
     'Total Customers (2026)' AS customer_segment,
     COUNT(*) AS total_customers
@@ -70,34 +76,34 @@ FROM orders_2026
 UNION ALL
 
 SELECT
-    'Total Customers (2027)',
-    COUNT(*)
+    'Total Customers (2027)' AS customer_segment,
+    COUNT(*) AS total_customers
 FROM orders_2027
 
 UNION ALL
 
 SELECT
-    'Active Customers',
-    COUNT(*)
+    'Active Customers' AS customer_segment,
+    COUNT(*) AS total_customers
 FROM active_customers
 
 UNION ALL
 
 SELECT
-    'Loyal Customers',
-    COUNT(*)
+    'Loyal Customers' AS customer_segment,
+    COUNT(*) AS total_customers
 FROM loyal_customers
 
 UNION ALL
 
 SELECT
-    'New Customers',
-    COUNT(*)
+    'New Customers' AS customer_segment,
+    COUNT(*) AS total_customers
 FROM new_customers
 
 UNION ALL
 
 SELECT
-    'Lost Customers',
-    COUNT(*)
+    'Lost Customers' AS customer_segment,
+    COUNT(*) AS total_customers
 FROM lost_customers;

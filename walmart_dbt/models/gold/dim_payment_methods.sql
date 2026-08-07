@@ -14,10 +14,15 @@ WITH source_methods AS (
 
 new_methods AS (
 
-    SELECT payment_method_id, payment_method_name
-    FROM source_methods
+    SELECT
+        sm.payment_method_id,
+        sm.payment_method_name
+    FROM source_methods AS sm
     {% if is_incremental() %}
-    WHERE payment_method_id NOT IN (SELECT payment_method_id FROM {{ this }})
+        WHERE sm.payment_method_id NOT IN (
+            SELECT t.payment_method_id
+            FROM {{ this }} AS t
+        )
     {% endif %}
 
 )

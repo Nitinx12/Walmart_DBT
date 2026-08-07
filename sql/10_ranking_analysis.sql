@@ -30,29 +30,30 @@ Created On  : 2026-08-03
 
 WITH ranked_base AS (
     SELECT
-        P.product_id,
-        P.product_name,
-        B.brand_name,
-        SUM(OI.line_amount) AS total_amount,
+        p.product_id,
+        p.product_name,
+        b.brand_name,
+        SUM(oi.line_amount) AS total_amount,
         DENSE_RANK() OVER (
-            PARTITION BY B.brand_name
-            ORDER BY SUM(OI.line_amount) DESC, P.product_id ASC
+            PARTITION BY b.brand_name
+            ORDER BY SUM(oi.line_amount) DESC, p.product_id ASC
         ) AS rnk
-    FROM gold.dim_brands AS B
-    INNER JOIN gold.dim_products AS P
-        ON P.brand_id = B.brand_id
-    INNER JOIN gold.fact_order_items AS OI
-        ON OI.product_id = P.product_id
-    INNER JOIN gold.dim_orders AS O
-        ON O.order_id = OI.order_id
+    FROM gold.dim_brands AS b
+    INNER JOIN gold.dim_products AS p
+        ON b.brand_id = p.brand_id
+    INNER JOIN gold.fact_order_items AS oi
+        ON p.product_id = oi.product_id
+    INNER JOIN gold.dim_orders AS o
+        ON oi.order_id = o.order_id
     WHERE
-        O.order_status = 'Completed'
-        AND O.is_active = TRUE
+        o.order_status = 'Completed'
+        AND o.is_active = TRUE
     GROUP BY
-        P.product_id,
-        P.product_name,
-        B.brand_name
+        p.product_id,
+        p.product_name,
+        b.brand_name
 )
+
 SELECT
     product_id,
     product_name,

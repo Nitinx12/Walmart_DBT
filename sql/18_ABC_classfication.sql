@@ -48,35 +48,37 @@ Created On  : 2026-08-06
 ===============================================================================
 */
 
-WITH product_base AS(
+WITH product_base AS (
     SELECT
-        P.product_id,
-        P.product_name,
-        B.brand_name,
-        C.category_name,
-        COUNT(DISTINCT OI.order_id)                             AS total_orders,
-        SUM(OI.quantity)                                        AS quantity_sold,
-        SUM(OI.line_amount)                                     AS total_revenue,
-        DENSE_RANK() OVER(
-            ORDER BY 
-                SUM(OI.line_amount) DESC, P.product_id ASC
+        p.product_id,
+        p.product_name,
+        b.brand_name,
+        c.category_name,
+        COUNT(DISTINCT oi.order_id) AS total_orders,
+        SUM(oi.quantity) AS quantity_sold,
+        SUM(oi.line_amount) AS total_revenue,
+        DENSE_RANK() OVER (
+            ORDER BY
+                SUM(oi.line_amount) DESC, p.product_id ASC
 
-        )                                                       AS revenue_rank
-    FROM gold.fact_order_items AS OI
-    INNER JOIN gold.dim_products AS P
-        ON P.product_id = OI.product_id
-    INNER JOIN gold.dim_brands AS B
-        ON B.brand_id = P.brand_id
-    INNER JOIN gold.dim_categories AS C
-        ON C.category_id = P.category_id
+        ) AS revenue_rank
+    FROM gold.fact_order_items AS oi
+    INNER JOIN gold.dim_products AS p
+        ON oi.product_id = p.product_id
+    INNER JOIN gold.dim_brands AS b
+        ON p.brand_id = b.brand_id
+    INNER JOIN gold.dim_categories AS c
+        ON p.category_id = c.category_id
     GROUP BY
-        P.product_id, P.product_name,
-        B.brand_name, C.category_name
+        p.product_id, p.product_name,
+        b.brand_name, c.category_name
 ),
-grand_total AS(
+
+grand_total AS (
     SELECT SUM(total_revenue) AS grand_revenue
     FROM product_base
 ),
+
 analysis_base AS (
     SELECT
         pb.product_id,
@@ -88,31 +90,32 @@ analysis_base AS (
         pb.total_revenue,
         pb.revenue_rank,
         ROUND(
-            pb.total_revenue * 100.0 /
-            gt.grand_revenue,
+            pb.total_revenue * 100.0
+            / gt.grand_revenue,
             2
         ) AS revenue_pct,
         SUM(pb.total_revenue) OVER (
             ORDER BY
                 pb.total_revenue DESC,
-                pb.product_id
+                pb.product_id ASC
             ROWS BETWEEN UNBOUNDED PRECEDING
-                 AND CURRENT ROW
+            AND CURRENT ROW
         ) AS cumulative_revenue,
         ROUND(
             SUM(pb.total_revenue) OVER (
                 ORDER BY
                     pb.total_revenue DESC,
-                    pb.product_id
+                    pb.product_id ASC
                 ROWS BETWEEN UNBOUNDED PRECEDING
-                     AND CURRENT ROW
-            ) * 100.0 /
-            gt.grand_revenue,
+                AND CURRENT ROW
+            ) * 100.0
+            / gt.grand_revenue,
             2
         ) AS cumulative_pct
     FROM product_base AS pb
     CROSS JOIN grand_total AS gt
 )
+
 SELECT
     product_id,
     product_name,
@@ -123,8 +126,8 @@ SELECT
     total_revenue,
     revenue_rank,
     revenue_pct,
-    ROUND(cumulative_revenue, 2) AS cumulative_revenue,
     cumulative_pct,
+    ROUND(cumulative_revenue, 2) AS cumulative_revenue,
     CASE
         WHEN cumulative_pct <= 80 THEN 'A'
         WHEN cumulative_pct <= 95 THEN 'B'
@@ -133,4 +136,4 @@ SELECT
 FROM analysis_base
 ORDER BY
     total_revenue DESC,
-    product_id;
+    product_id ASC;

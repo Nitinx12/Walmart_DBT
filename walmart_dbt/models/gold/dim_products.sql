@@ -19,15 +19,15 @@ WITH source_products AS (
         price,
         created_timestamp,
         updated_timestamp
-    FROM {{ ref('products') }}
+    FROM {{ ref('products') }} AS sp
 
     {% if is_incremental() %}
-    WHERE updated_timestamp >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE sp.updated_timestamp >= (
+            COALESCE(
+                (SELECT MAX(t.updated_timestamp) FROM {{ this }} AS t),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 
 )

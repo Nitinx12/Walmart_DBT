@@ -14,7 +14,7 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM pg_database
     WHERE datname = 'walmart_db'
-)\gexec
+) \gexec
 
 -- Connect to the database.
 \c walmart_db

@@ -58,12 +58,13 @@ WITH calendar AS (
             INTERVAL '1 day'
         )::DATE AS sales_date
 ),
+
 daily_sales AS (
     SELECT
         o.order_timestamp::DATE AS sales_date,
         COUNT(DISTINCT o.order_id) AS total_orders,
         COUNT(DISTINCT o.customer_id) AS total_customers,
-        ROUND(SUM(oi.line_amount),2) AS total_revenue
+        ROUND(SUM(oi.line_amount), 2) AS total_revenue
     FROM gold.dim_orders AS o
     INNER JOIN gold.fact_order_items AS oi
         ON o.order_id = oi.order_id
@@ -71,11 +72,12 @@ daily_sales AS (
     GROUP BY
         o.order_timestamp::DATE
 )
+
 SELECT
     c.sales_date,
-    COALESCE(ds.total_orders,0) AS total_orders,
-    COALESCE(ds.total_customers,0) AS total_customers,
-    COALESCE(ds.total_revenue,0) AS total_revenue,
+    COALESCE(ds.total_orders, 0) AS total_orders,
+    COALESCE(ds.total_customers, 0) AS total_customers,
+    COALESCE(ds.total_revenue, 0) AS total_revenue,
     CASE
         WHEN ds.sales_date IS NULL
             THEN 'No Sales'

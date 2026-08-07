@@ -14,10 +14,15 @@ WITH source_brands AS (
 
 new_brands AS (
 
-    SELECT brand_id, brand_name
-    FROM source_brands
+    SELECT
+        sb.brand_id,
+        sb.brand_name
+    FROM source_brands AS sb
     {% if is_incremental() %}
-    WHERE brand_id NOT IN (SELECT brand_id FROM {{ this }})
+        WHERE sb.brand_id NOT IN (
+            SELECT t.brand_id
+            FROM {{ this }} AS t
+        )
     {% endif %}
 
 )

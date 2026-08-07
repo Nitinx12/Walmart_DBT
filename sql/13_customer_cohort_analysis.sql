@@ -28,22 +28,24 @@ WITH cohort_base AS (
     FROM gold.dim_orders
     GROUP BY customer_id
 ),
+
 month_index AS (
     SELECT
         cb.customer_id,
         cb.cohort_month,
         (
-            EXTRACT(YEAR FROM o.order_timestamp) * 12 +
-            EXTRACT(MONTH FROM o.order_timestamp)
-        ) -
-        (
-            EXTRACT(YEAR FROM cb.cohort_month) * 12 +
-            EXTRACT(MONTH FROM cb.cohort_month)
+            EXTRACT(YEAR FROM o.order_timestamp) * 12
+            + EXTRACT(MONTH FROM o.order_timestamp)
+        )
+        - (
+            EXTRACT(YEAR FROM cb.cohort_month) * 12
+            + EXTRACT(MONTH FROM cb.cohort_month)
         ) AS month_number
     FROM cohort_base AS cb
     INNER JOIN gold.dim_orders AS o
         ON cb.customer_id = o.customer_id
 ),
+
 active_cohort AS (
     SELECT
         cohort_month,
@@ -53,6 +55,7 @@ active_cohort AS (
     GROUP BY
         cohort_month, month_number
 ),
+
 cohort_size AS (
     SELECT
         cohort_month,
@@ -60,12 +63,13 @@ cohort_size AS (
     FROM active_cohort
     WHERE month_number = 0
 )
+
 SELECT
     ac.cohort_month,
     ac.month_number,
     cs.base_size,
     ac.active_customers,
-    ROUND(ac.active_customers * 100.0 / cs.base_size,2) AS retention_rate
+    ROUND(ac.active_customers * 100.0 / cs.base_size, 2) AS retention_rate
 FROM active_cohort AS ac
 INNER JOIN cohort_size AS cs
     ON ac.cohort_month = cs.cohort_month

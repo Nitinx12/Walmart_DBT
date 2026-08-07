@@ -14,10 +14,15 @@ WITH source_categories AS (
 
 new_categories AS (
 
-    SELECT category_id, category_name
-    FROM source_categories
+    SELECT
+        sc.category_id,
+        sc.category_name
+    FROM source_categories AS sc
     {% if is_incremental() %}
-    WHERE category_id NOT IN (SELECT category_id FROM {{ this }})
+        WHERE sc.category_id NOT IN (
+            SELECT t.category_id
+            FROM {{ this }} AS t
+        )
     {% endif %}
 
 )

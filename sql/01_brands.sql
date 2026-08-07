@@ -15,29 +15,32 @@ Description:
 ===============================================================================
 */
 
-WITH brand_base AS(
+WITH brand_base AS (
     SELECT
-        B.brand_id,
-        B.brand_name,
-        SUM(OI.line_amount) AS total_amount
-    FROM gold.dim_brands AS B
-    LEFT JOIN gold.dim_products AS P ON
-        P.brand_id = B.brand_id
-    LEFT JOIN gold.fact_order_items AS OI ON
-        OI.product_id = P.product_id
+        b.brand_id,
+        b.brand_name,
+        SUM(oi.line_amount) AS total_amount
+    FROM gold.dim_brands AS b
+    LEFT JOIN gold.dim_products AS p
+        ON
+            b.brand_id = p.brand_id
+    LEFT JOIN gold.fact_order_items AS oi
+        ON
+            p.product_id = oi.product_id
     GROUP BY
-        B.brand_id,
-        B.brand_name
+        b.brand_id,
+        b.brand_name
 ),
-grand_revenue AS(
+
+grand_revenue AS (
     SELECT SUM(total_amount) AS grand_revenue
     FROM brand_base
 )
-SELECT
-    B.brand_name,
-    B.total_amount,
-    ROUND(B.total_amount / GR.grand_revenue * 100,2) AS pct_of_total
-FROM brand_base AS B
-CROSS JOIN grand_revenue AS GR
-ORDER BY pct_of_total DESC;
 
+SELECT
+    b.brand_name,
+    b.total_amount,
+    ROUND(b.total_amount / gr.grand_revenue * 100, 2) AS pct_of_total
+FROM brand_base AS b
+CROSS JOIN grand_revenue AS gr
+ORDER BY pct_of_total DESC;

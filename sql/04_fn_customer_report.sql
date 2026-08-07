@@ -61,38 +61,38 @@
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION fn_customer_report(
-    p_schema                     TEXT       DEFAULT 'public',
-    p_customer_id                INTEGER    DEFAULT NULL,
-    p_start_date                 DATE       DEFAULT NULL,
-    p_end_date                   DATE       DEFAULT NULL,
-    p_order_status               VARCHAR    DEFAULT NULL,
-    p_is_active                  BOOLEAN    DEFAULT NULL,
-    p_include_inactive_orders    BOOLEAN    DEFAULT FALSE,
-    p_country                    VARCHAR    DEFAULT NULL,
-    p_province                   VARCHAR    DEFAULT NULL,
-    p_city                       VARCHAR    DEFAULT NULL,
-    p_sort_by                    TEXT       DEFAULT 'total_spent',
-    p_sort_direction             TEXT       DEFAULT 'DESC',
-    p_limit                      INTEGER    DEFAULT NULL
+    p_schema TEXT DEFAULT 'public',
+    p_customer_id INTEGER DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_order_status VARCHAR DEFAULT NULL,
+    p_is_active BOOLEAN DEFAULT NULL,
+    p_include_inactive_orders BOOLEAN DEFAULT FALSE,
+    p_country VARCHAR DEFAULT NULL,
+    p_province VARCHAR DEFAULT NULL,
+    p_city VARCHAR DEFAULT NULL,
+    p_sort_by TEXT DEFAULT 'total_spent',
+    p_sort_direction TEXT DEFAULT 'DESC',
+    p_limit INTEGER DEFAULT NULL
 )
 RETURNS TABLE (
-    customer_id                     INTEGER,
-    customer_name                   VARCHAR,
-    phone                           TEXT,
-    email                           VARCHAR,
-    city                            VARCHAR,
-    province                        VARCHAR,
-    country                         VARCHAR,
-    is_active                       BOOLEAN,
-    total_orders                    INTEGER,
-    total_items                     BIGINT,
-    total_spent                     NUMERIC(14,2),
-    total_line_item_amount          NUMERIC(14,2),
-    amount_variance                 NUMERIC(14,2),
-    avg_order_value                 NUMERIC(14,2),
-    first_order_date                TIMESTAMP,
-    last_order_date                 TIMESTAMP,
-    days_since_last_order           INTEGER
+    customer_id INTEGER,
+    customer_name VARCHAR,
+    phone TEXT,
+    email VARCHAR,
+    city VARCHAR,
+    province VARCHAR,
+    country VARCHAR,
+    is_active BOOLEAN,
+    total_orders INTEGER,
+    total_items BIGINT,
+    total_spent NUMERIC(14, 2),
+    total_line_item_amount NUMERIC(14, 2),
+    amount_variance NUMERIC(14, 2),
+    avg_order_value NUMERIC(14, 2),
+    first_order_date TIMESTAMP,
+    last_order_date TIMESTAMP,
+    days_since_last_order INTEGER
 )
 LANGUAGE plpgsql
 AS $function$

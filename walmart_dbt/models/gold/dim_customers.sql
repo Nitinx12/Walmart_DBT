@@ -19,15 +19,15 @@ WITH source_customers AS (
         country,
         created_timestamp,
         updated_timestamp
-    FROM {{ ref('customers') }}
+    FROM {{ ref('customers') }} AS sc
 
     {% if is_incremental() %}
-    WHERE updated_timestamp >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE sc.updated_timestamp >= (
+            COALESCE(
+                (SELECT MAX(t.updated_timestamp) FROM {{ this }} AS t),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 
 )

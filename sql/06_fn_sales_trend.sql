@@ -79,32 +79,32 @@
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION fn_sales_trend_analysis(
-    p_schema                        TEXT        DEFAULT 'public',
-    p_granularity                   TEXT        DEFAULT 'month',
-    p_start_date                    DATE        DEFAULT NULL,
-    p_end_date                      DATE        DEFAULT NULL,
-    p_product_id                    INTEGER     DEFAULT NULL,
-    p_category_id                   BIGINT      DEFAULT NULL,
-    p_brand_id                      BIGINT      DEFAULT NULL,
-    p_customer_id                   INTEGER     DEFAULT NULL,
-    p_include_inactive_items        BOOLEAN     DEFAULT FALSE,
-    p_moving_avg_periods            INTEGER     DEFAULT 3,
-    p_sort_direction                TEXT        DEFAULT 'ASC'
+    p_schema TEXT DEFAULT 'public',
+    p_granularity TEXT DEFAULT 'month',
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_product_id INTEGER DEFAULT NULL,
+    p_category_id BIGINT DEFAULT NULL,
+    p_brand_id BIGINT DEFAULT NULL,
+    p_customer_id INTEGER DEFAULT NULL,
+    p_include_inactive_items BOOLEAN DEFAULT FALSE,
+    p_moving_avg_periods INTEGER DEFAULT 3,
+    p_sort_direction TEXT DEFAULT 'ASC'
 )
 RETURNS TABLE (
-    period_start                TIMESTAMP,
-    period_label                TEXT,
-    total_orders                INTEGER,
-    total_quantity_sold         BIGINT,
-    total_revenue               NUMERIC(14,2),
-    avg_order_value             NUMERIC(14,2),
-    prev_period_revenue         NUMERIC(14,2),
-    revenue_change              NUMERIC(14,2),
-    revenue_growth_pct          NUMERIC(10,2),
-    prev_period_quantity        BIGINT,
-    quantity_change             BIGINT,
-    quantity_growth_pct         NUMERIC(10,2),
-    moving_avg_revenue          NUMERIC(14,2)
+    period_start TIMESTAMP,
+    period_label TEXT,
+    total_orders INTEGER,
+    total_quantity_sold BIGINT,
+    total_revenue NUMERIC(14, 2),
+    avg_order_value NUMERIC(14, 2),
+    prev_period_revenue NUMERIC(14, 2),
+    revenue_change NUMERIC(14, 2),
+    revenue_growth_pct NUMERIC(10, 2),
+    prev_period_quantity BIGINT,
+    quantity_change BIGINT,
+    quantity_growth_pct NUMERIC(10, 2),
+    moving_avg_revenue NUMERIC(14, 2)
 )
 LANGUAGE plpgsql
 AS $function$

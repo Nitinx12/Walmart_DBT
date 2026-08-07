@@ -20,14 +20,15 @@ WITH incremental_filter AS (
         _id
     FROM {{ source('bronze', 'employees') }}
     {% if is_incremental() %}
-    WHERE updated_timestamp::TIMESTAMP >= (
-        COALESCE(
-            (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
-            TIMESTAMP '1900-01-01'
-        ) - INTERVAL '3 days'
-    )
+        WHERE updated_timestamp::TIMESTAMP >= (
+            COALESCE(
+                (SELECT MAX(updated_timestamp::TIMESTAMP) FROM {{ this }}),
+                TIMESTAMP '1900-01-01'
+            ) - INTERVAL '3 days'
+        )
     {% endif %}
 ),
+
 deduplicated AS (
     SELECT
         *,
@@ -40,23 +41,25 @@ deduplicated AS (
         ) AS rnk
     FROM incremental_filter
 ),
+
 cleaned AS (
     SELECT
-        TRIM(employee_id::VARCHAR)::INT                      AS employee_id,
-        TRIM(store_id::VARCHAR)::INT                         AS store_id,
-        TRIM(CONCAT(first_name, ' ', last_name))::VARCHAR    AS employee_name,
-        TRIM(email::VARCHAR)::VARCHAR                        AS email,
-        TRIM(job_title::VARCHAR)::VARCHAR                    AS job_title,
+        created_timestamp::TIMESTAMP AS created_timestamp,
+        updated_timestamp::TIMESTAMP AS updated_timestamp,
+        TRIM(employee_id::VARCHAR)::INT AS employee_id,
+        TRIM(store_id::VARCHAR)::INT AS store_id,
+        TRIM(CONCAT(first_name, ' ', last_name))::VARCHAR AS employee_name,
+        TRIM(email::VARCHAR)::VARCHAR AS email,
+        TRIM(job_title::VARCHAR)::VARCHAR AS job_title,
         CASE
             WHEN is_active IS NULL THEN NULL
             WHEN UPPER(TRIM(is_active)) = 'Y' THEN TRUE
             ELSE FALSE
-        END                                                  AS is_active,
-        TRIM(salary::VARCHAR)::NUMERIC                       AS salary,
-        created_timestamp::TIMESTAMP                         AS created_timestamp,
-        updated_timestamp::TIMESTAMP                         AS updated_timestamp,
-        CURRENT_TIMESTAMP                                    AS silver_loaded_at
+        END AS is_active,
+        TRIM(salary::VARCHAR)::NUMERIC AS salary,
+        CURRENT_TIMESTAMP AS silver_loaded_at
     FROM deduplicated
     WHERE rnk = 1
 )
+
 SELECT * FROM cleaned

@@ -15,30 +15,30 @@ Description:
 ===============================================================================
 */
 
-WITH payment_base AS(
+WITH payment_base AS (
     SELECT
-        P.payment_method_id,
-        INITCAP(P.payment_method_name)  AS payment_method_name,
-        SUM(OI.line_amount)             AS total_amount
-    FROM gold.dim_payment_methods AS P
-    LEFT JOIN gold.dim_orders AS O
-        ON O.payment_method_id = P.payment_method_id
-    LEFT JOIN gold.fact_order_items AS OI
-        ON OI.order_id = O.order_id
+        p.payment_method_id,
+        INITCAP(p.payment_method_name) AS payment_method_name,
+        SUM(oi.line_amount) AS total_amount
+    FROM gold.dim_payment_methods AS p
+    LEFT JOIN gold.dim_orders AS o
+        ON p.payment_method_id = o.payment_method_id
+    LEFT JOIN gold.fact_order_items AS oi
+        ON o.order_id = oi.order_id
     GROUP BY
-        P.payment_method_id,
+        p.payment_method_id,
         payment_method_name
 ),
-grand_revenue AS(
+
+grand_revenue AS (
     SELECT SUM(total_amount) AS total_revenue
     FROM payment_base
 )
+
 SELECT
-    P.payment_method_name,
-    P.total_amount,
-    ROUND(P.total_amount / GR.total_revenue * 100,2) AS pct_of_total
-FROM payment_base AS P
-CROSS JOIN grand_revenue AS GR
+    p.payment_method_name,
+    p.total_amount,
+    ROUND(p.total_amount / gr.total_revenue * 100, 2) AS pct_of_total
+FROM payment_base AS p
+CROSS JOIN grand_revenue AS gr
 ORDER BY pct_of_total DESC
-
-

@@ -25,15 +25,15 @@ Created On  : 2026-08-06
 WITH customer_orders AS (
     SELECT
         o.customer_id,
-        c.first_name || ' ' || c.last_name AS customer_name,
         o.order_id,
         o.order_timestamp::DATE AS order_date,
+        c.first_name || ' ' || c.last_name AS customer_name,
         SUM(oi.line_amount) AS order_amount
     FROM gold.dim_orders AS o
     INNER JOIN gold.fact_order_items AS oi
         ON o.order_id = oi.order_id
     INNER JOIN gold.dim_customers AS c
-        ON c.customer_id = o.customer_id
+        ON o.customer_id = c.customer_id
     WHERE o.order_status = 'Completed'
     GROUP BY
         o.customer_id,
@@ -41,6 +41,7 @@ WITH customer_orders AS (
         o.order_id,
         order_date
 ),
+
 purchase_gap AS (
     SELECT
         customer_id,
@@ -54,6 +55,7 @@ purchase_gap AS (
         ) AS previous_order_date
     FROM customer_orders
 ),
+
 customer_summary AS (
     SELECT
         customer_id,
@@ -62,7 +64,7 @@ customer_summary AS (
         MAX(order_date) AS last_purchase_date,
         COUNT(order_id) AS total_orders,
         COUNT(order_id) - 1 AS repeat_orders,
-        ROUND(SUM(order_amount),2) AS total_revenue,
+        ROUND(SUM(order_amount), 2) AS total_revenue,
         ROUND(
             AVG(order_amount),
             2
@@ -76,6 +78,7 @@ customer_summary AS (
         customer_id,
         customer_name
 )
+
 SELECT
     customer_id,
     customer_name,
