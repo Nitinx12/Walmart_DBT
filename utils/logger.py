@@ -19,17 +19,21 @@ Usage:
     log = get_logger("incremental_loader", console_level=logging.WARNING)
 """
 
-import os
 import logging
-from logging.handlers import RotatingFileHandler
+import os
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+LOG_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs"
+)
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def get_logger(name: str = "app", level: int = logging.INFO, console_level: int = None) -> logging.Logger:
+def get_logger(
+    name: str = "app", level: int = logging.INFO, console_level: int | None = None
+) -> logging.Logger:
     os.makedirs(LOG_DIR, exist_ok=True)
 
     logger = logging.getLogger(name)
@@ -49,8 +53,10 @@ def get_logger(name: str = "app", level: int = logging.INFO, console_level: int 
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # File handler: one file per day, rotated further if it grows past 5MB
-    log_filename = f"{name}_{datetime.now().strftime('%Y-%m-%d')}.log"
+    # File handler: one file per day, rotated further if it grows past 5MB.
+    # Uses local time (via astimezone) so the file rolls over on the local
+    # calendar day, same as before, while still satisfying DTZ005.
+    log_filename = f"{name}_{datetime.now().astimezone().strftime('%Y-%m-%d')}.log"
     file_handler = RotatingFileHandler(
         os.path.join(LOG_DIR, log_filename),
         maxBytes=5 * 1024 * 1024,  # 5 MB

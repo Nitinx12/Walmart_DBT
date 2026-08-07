@@ -74,18 +74,21 @@ import traceback
 import uuid
 import warnings
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.columns import Columns
-from rich.progress import (
-    Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn,
-)
 from rich import box
+from rich.columns import Columns
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
 
 console = Console()
 
@@ -107,17 +110,16 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils import engine as config          # noqa: E402  (validated env vars)
-from utils.connection import get_mongo_db    # noqa: E402
-from utils.logger import get_logger          # noqa: E402
+import pyspark
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import ArrayType, MapType, StructType
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
-import pyspark                                            # noqa: E402
-from pyspark.sql import SparkSession, DataFrame          # noqa: E402
-from pyspark.sql import functions as F                    # noqa: E402
-from pyspark.sql.types import StructType, ArrayType, MapType  # noqa: E402
-
-from sqlalchemy import create_engine, text                # noqa: E402
-from sqlalchemy.exc import SQLAlchemyError                 # noqa: E402
+from utils import engine as config
+from utils.connection import get_mongo_db
+from utils.logger import get_logger
 
 log = get_logger("mongo_exp")
 
@@ -133,16 +135,11 @@ JARS_DIR = PROJECT_ROOT / "jars"
 # and the script will use them directly via `spark.jars`, skipping Ivy
 # resolution entirely -- no more ":: resolving dependencies ::" banner.
 MONGO_CONNECTOR_JAR_URLS = {
-    "mongo-spark-connector_2.12-10.4.0.jar":
-        "https://repo1.maven.org/maven2/org/mongodb/spark/mongo-spark-connector_2.12/10.4.0/mongo-spark-connector_2.12-10.4.0.jar",
-    "mongodb-driver-sync-5.1.4.jar":
-        "https://repo1.maven.org/maven2/org/mongodb/mongodb-driver-sync/5.1.4/mongodb-driver-sync-5.1.4.jar",
-    "bson-5.1.4.jar":
-        "https://repo1.maven.org/maven2/org/mongodb/bson/5.1.4/bson-5.1.4.jar",
-    "mongodb-driver-core-5.1.4.jar":
-        "https://repo1.maven.org/maven2/org/mongodb/mongodb-driver-core/5.1.4/mongodb-driver-core-5.1.4.jar",
-    "bson-record-codec-5.1.4.jar":
-        "https://repo1.maven.org/maven2/org/mongodb/bson-record-codec/5.1.4/bson-record-codec-5.1.4.jar",
+    "mongo-spark-connector_2.12-10.4.0.jar": "https://repo1.maven.org/maven2/org/mongodb/spark/mongo-spark-connector_2.12/10.4.0/mongo-spark-connector_2.12-10.4.0.jar",
+    "mongodb-driver-sync-5.1.4.jar": "https://repo1.maven.org/maven2/org/mongodb/mongodb-driver-sync/5.1.4/mongodb-driver-sync-5.1.4.jar",
+    "bson-5.1.4.jar": "https://repo1.maven.org/maven2/org/mongodb/bson/5.1.4/bson-5.1.4.jar",
+    "mongodb-driver-core-5.1.4.jar": "https://repo1.maven.org/maven2/org/mongodb/mongodb-driver-core/5.1.4/mongodb-driver-core-5.1.4.jar",
+    "bson-record-codec-5.1.4.jar": "https://repo1.maven.org/maven2/org/mongodb/bson-record-codec/5.1.4/bson-record-codec-5.1.4.jar",
 }
 
 POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA_BRONZE", "bronze")
@@ -151,7 +148,12 @@ PRIMARY_KEY_COLUMN = "_id"
 # Checked in this order per collection; first one actually present wins.
 # "updated_*" is preferred over "created_*" because it also catches rows
 # that were modified after insert, not just brand-new ones.
-INCREMENTAL_COLUMN_CANDIDATES = ["updated_timestamp", "updated_at", "created_timestamp", "created_at"]
+INCREMENTAL_COLUMN_CANDIDATES = [
+    "updated_timestamp",
+    "updated_at",
+    "created_timestamp",
+    "created_at",
+]
 
 # Control tables (also live in POSTGRES_SCHEMA, alongside the mirrored
 # collections). These are the source of truth for incremental state and run
@@ -167,23 +169,23 @@ LOG_TABLE = "etl_logs"
 @dataclass
 class CollectionResult:
     name: str
-    status: str = "OK"                    # OK | SKIPPED | FAILED | VALIDATION FAILED | DRY-RUN
-    mode: str = "incremental"             # full | incremental | full (no watermark column)
-    incremental_column: Optional[str] = None
+    status: str = "OK"  # OK | SKIPPED | FAILED | VALIDATION FAILED | DRY-RUN
+    mode: str = "incremental"  # full | incremental | full (no watermark column)
+    incremental_column: str | None = None
     mongo_rows: int = 0
     postgres_rows_before: int = 0
-    batch_rows: int = 0                   # rows pulled from Mongo this run
+    batch_rows: int = 0  # rows pulled from Mongo this run
     rows_inserted: int = 0
     rows_updated: int = 0
     skipped_rows: int = 0
     postgres_rows_after: int = 0
     columns: int = 0
-    error: Optional[str] = None          # short, single-line -- shown in the console table
-    error_full: Optional[str] = None     # full traceback -- written to public.etl_logs only
+    error: str | None = None  # short, single-line -- shown in the console table
+    error_full: str | None = None  # full traceback -- written to public.etl_logs only
     seconds: float = 0.0
     complex_fields_flattened: list = field(default_factory=list)
-    watermark_before: Optional[datetime] = None
-    watermark_after: Optional[datetime] = None
+    watermark_before: datetime | None = None
+    watermark_after: datetime | None = None
     validation_status: str = "N/A"
     validation_detail: str = ""
 
@@ -203,12 +205,16 @@ def short_error(exc: BaseException, max_len: int = 220) -> str:
             continue
         # Stop at the first stack-frame-looking line (Java "at ...",
         # Python "File "...", or a "N more" continuation).
-        if ln.startswith("at ") or ln.startswith('File "') or re.match(r"^\.{3}\s*\d+\s*more$", ln):
+        if ln.startswith(("at ", 'File "')) or re.match(r"^\.{3}\s*\d+\s*more$", ln):
             break
         keep.append(ln)
         if len(keep) >= 2:
             break
-    msg = " -- ".join(keep) if keep else (text.splitlines() or [exc.__class__.__name__])[0]
+    msg = (
+        " -- ".join(keep)
+        if keep
+        else (text.splitlines() or [exc.__class__.__name__])[0]
+    )
     msg = re.sub(r"\s+", " ", msg).strip(": ")
     if len(msg) > max_len:
         msg = msg[: max_len - 1].rstrip() + "…"
@@ -230,17 +236,20 @@ def check_connector_compatibility() -> None:
     """
     major = int(pyspark.__version__.split(".")[0])
     if major >= 4:
-        console.print(Panel.fit(
-            f"[bold red]Incompatible versions detected[/bold red]\n"
-            f"pyspark [yellow]{pyspark.__version__}[/yellow] is installed, but the pinned "
-            f"connector\n[cyan]{MONGO_CONNECTOR_PACKAGE}[/cyan] only supports Spark 3.x.\n"
-            f"Every collection would fail with java.lang.NoSuchMethodError.\n\n"
-            f"[bold]Fix:[/bold] pin pyspark to a 3.5.x release to match the connector:\n"
-            f"    pip install \"pyspark==3.5.5\" --break-system-packages\n"
-            f"(or check mvnrepository.com for a mongo-spark-connector build\n"
-            f"that targets Spark 4.x, once one ships).",
-            border_style="red", title="Version check failed",
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold red]Incompatible versions detected[/bold red]\n"
+                f"pyspark [yellow]{pyspark.__version__}[/yellow] is installed, but the pinned "
+                f"connector\n[cyan]{MONGO_CONNECTOR_PACKAGE}[/cyan] only supports Spark 3.x.\n"
+                f"Every collection would fail with java.lang.NoSuchMethodError.\n\n"
+                f"[bold]Fix:[/bold] pin pyspark to a 3.5.x release to match the connector:\n"
+                f'    pip install "pyspark==3.5.5" --break-system-packages\n'
+                f"(or check mvnrepository.com for a mongo-spark-connector build\n"
+                f"that targets Spark 4.x, once one ships).",
+                border_style="red",
+                title="Version check failed",
+            )
+        )
         raise SystemExit(2)
 
 
@@ -248,8 +257,10 @@ def build_spark_session() -> SparkSession:
     check_connector_compatibility()
 
     if not JDBC_JAR_PATH.exists():
-        log.warning(f"Postgres JDBC jar not found at {JDBC_JAR_PATH}; "
-                    f"JDBC writes will fail until it is placed there.")
+        log.warning(
+            f"Postgres JDBC jar not found at {JDBC_JAR_PATH}; "
+            f"JDBC writes will fail until it is placed there."
+        )
 
     local_connector_jars = [JARS_DIR / name for name in MONGO_CONNECTOR_JAR_URLS]
     have_local_jars = all(p.exists() for p in local_connector_jars)
@@ -262,23 +273,37 @@ def build_spark_session() -> SparkSession:
     )
 
     if have_local_jars:
-        all_jars = ",".join([str(JDBC_JAR_PATH)] + [str(p) for p in local_connector_jars])
-        builder = builder.config("spark.jars", all_jars)
-        log.info("Building Spark session (using locally cached connector jars -- no download)")
-    else:
-        builder = (
-            builder.config("spark.jars", str(JDBC_JAR_PATH))
-            .config("spark.jars.packages", MONGO_CONNECTOR_PACKAGE)
+        all_jars = ",".join(
+            [str(JDBC_JAR_PATH)] + [str(p) for p in local_connector_jars]
         )
-        log.info("Building Spark session (mongo connector package will be resolved via Ivy/Maven)")
-        missing = [name for name, p in zip(MONGO_CONNECTOR_JAR_URLS, local_connector_jars) if not p.exists()]
-        tip = "\n".join(f"  {name}\n    {MONGO_CONNECTOR_JAR_URLS[name]}" for name in missing)
-        console.print(Panel(
-            f"[yellow]Connector jars not found in {JARS_DIR} -- resolving via Maven this run "
-            f"(that's the \":: resolving dependencies ::\" output below).[/yellow]\n\n"
-            f"To skip this on every future run, download these into [cyan]{JARS_DIR}[/cyan]:\n\n{tip}",
-            title="One-time setup tip", border_style="yellow",
-        ))
+        builder = builder.config("spark.jars", all_jars)
+        log.info(
+            "Building Spark session (using locally cached connector jars -- no download)"
+        )
+    else:
+        builder = builder.config("spark.jars", str(JDBC_JAR_PATH)).config(
+            "spark.jars.packages", MONGO_CONNECTOR_PACKAGE
+        )
+        log.info(
+            "Building Spark session (mongo connector package will be resolved via Ivy/Maven)"
+        )
+        missing = [
+            name
+            for name, p in zip(MONGO_CONNECTOR_JAR_URLS, local_connector_jars)
+            if not p.exists()
+        ]
+        tip = "\n".join(
+            f"  {name}\n    {MONGO_CONNECTOR_JAR_URLS[name]}" for name in missing
+        )
+        console.print(
+            Panel(
+                f"[yellow]Connector jars not found in {JARS_DIR} -- resolving via Maven this run "
+                f'(that\'s the ":: resolving dependencies ::" output below).[/yellow]\n\n'
+                f"To skip this on every future run, download these into [cyan]{JARS_DIR}[/cyan]:\n\n{tip}",
+                title="One-time setup tip",
+                border_style="yellow",
+            )
+        )
 
     spark = builder.getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
@@ -305,11 +330,15 @@ def discover_collections(mongo_db) -> list[str]:
     collections = sorted(
         c for c in names if not any(c.startswith(p) for p in MONGO_SYSTEM_PREFIXES)
     )
-    log.info(f"Discovered {len(collections)} collection(s) in '{config.MONGO_DB}': {collections}")
+    log.info(
+        f"Discovered {len(collections)} collection(s) in '{config.MONGO_DB}': {collections}"
+    )
     return collections
 
 
-def detect_incremental_column(sample_fields: list[str], override: Optional[str] = None) -> Optional[str]:
+def detect_incremental_column(
+    sample_fields: list[str], override: str | None = None
+) -> str | None:
     """Pick the watermark column for a collection: an explicit override wins,
     otherwise the first candidate (in priority order) actually present on a
     sample document. Returns None if the collection has none of them."""
@@ -330,7 +359,9 @@ def table_exists(pg_engine, table: str) -> bool:
         "WHERE table_schema = :schema AND table_name = :table)"
     )
     with pg_engine.connect() as conn:
-        return bool(conn.execute(q, {"schema": POSTGRES_SCHEMA, "table": table}).scalar())
+        return bool(
+            conn.execute(q, {"schema": POSTGRES_SCHEMA, "table": table}).scalar()
+        )
 
 
 def get_row_count(pg_engine, table: str) -> int:
@@ -347,7 +378,10 @@ def get_table_columns(pg_engine, table: str) -> list[str]:
         "WHERE table_schema = :schema AND table_name = :table ORDER BY ordinal_position"
     )
     with pg_engine.connect() as conn:
-        return [row[0] for row in conn.execute(q, {"schema": POSTGRES_SCHEMA, "table": table})]
+        return [
+            row[0]
+            for row in conn.execute(q, {"schema": POSTGRES_SCHEMA, "table": table})
+        ]
 
 
 def has_unique_index_on(pg_engine, table: str, column: str) -> bool:
@@ -362,7 +396,12 @@ def has_unique_index_on(pg_engine, table: str, column: str) -> bool:
           AND i.indnatts = 1
     """)
     with pg_engine.connect() as conn:
-        return conn.execute(q, {"schema": POSTGRES_SCHEMA, "table": table, "column": column}).fetchone() is not None
+        return (
+            conn.execute(
+                q, {"schema": POSTGRES_SCHEMA, "table": table, "column": column}
+            ).fetchone()
+            is not None
+        )
 
 
 def ensure_unique_id_index(pg_engine, table: str) -> bool:
@@ -374,24 +413,30 @@ def ensure_unique_id_index(pg_engine, table: str) -> bool:
     index_name = f"{table}_{PRIMARY_KEY_COLUMN.strip('_')}_uidx"
     try:
         with pg_engine.begin() as conn:
-            conn.execute(text(
-                f'CREATE UNIQUE INDEX IF NOT EXISTS "{index_name}" '
-                f'ON "{POSTGRES_SCHEMA}"."{table}" ("{PRIMARY_KEY_COLUMN}")'
-            ))
+            conn.execute(
+                text(
+                    f'CREATE UNIQUE INDEX IF NOT EXISTS "{index_name}" '
+                    f'ON "{POSTGRES_SCHEMA}"."{table}" ("{PRIMARY_KEY_COLUMN}")'
+                )
+            )
         return True
     except SQLAlchemyError:
         log.warning(
-            f"[{table}] could not create a unique index on \"{PRIMARY_KEY_COLUMN}\" "
+            f'[{table}] could not create a unique index on "{PRIMARY_KEY_COLUMN}" '
             f"(likely duplicate values already present) -- upserts will fall back to append-only."
         )
         return False
 
 
-def get_max_column_value(pg_engine, table: str, column: str) -> Optional[datetime]:
-    if not table_exists(pg_engine, table) or column not in get_table_columns(pg_engine, table):
+def get_max_column_value(pg_engine, table: str, column: str) -> datetime | None:
+    if not table_exists(pg_engine, table) or column not in get_table_columns(
+        pg_engine, table
+    ):
         return None
     with pg_engine.connect() as conn:
-        return conn.execute(text(f'SELECT MAX("{column}") FROM "{POSTGRES_SCHEMA}"."{table}"')).scalar()
+        return conn.execute(
+            text(f'SELECT MAX("{column}") FROM "{POSTGRES_SCHEMA}"."{table}"')
+        ).scalar()
 
 
 # ---------------------------------------------------------------------------
@@ -445,29 +490,38 @@ def ensure_control_tables(pg_engine) -> None:
         # Forward-compatible migration in case these tables were created by
         # an earlier version of this script that didn't have every column.
         for stmt in [
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS incremental_column TEXT',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_watermark_value TIMESTAMPTZ',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_run_rows_inserted BIGINT NOT NULL DEFAULT 0',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_run_rows_updated BIGINT NOT NULL DEFAULT 0',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS incremental_column TEXT',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS batch_rows BIGINT',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS rows_inserted BIGINT',
-            f'ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS rows_updated BIGINT',
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS incremental_column TEXT",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_watermark_value TIMESTAMPTZ",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_run_rows_inserted BIGINT NOT NULL DEFAULT 0",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{WATERMARK_TABLE} ADD COLUMN IF NOT EXISTS last_run_rows_updated BIGINT NOT NULL DEFAULT 0",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS incremental_column TEXT",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS batch_rows BIGINT",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS rows_inserted BIGINT",
+            f"ALTER TABLE {POSTGRES_SCHEMA}.{LOG_TABLE} ADD COLUMN IF NOT EXISTS rows_updated BIGINT",
         ]:
             conn.execute(text(stmt))
-    log.info(f"Confirmed control tables exist: {POSTGRES_SCHEMA}.{WATERMARK_TABLE}, {POSTGRES_SCHEMA}.{LOG_TABLE}")
+    log.info(
+        f"Confirmed control tables exist: {POSTGRES_SCHEMA}.{WATERMARK_TABLE}, {POSTGRES_SCHEMA}.{LOG_TABLE}"
+    )
 
 
-def get_watermark(pg_engine, table: str) -> Optional[datetime]:
-    q = text(f'SELECT last_watermark_value FROM {POSTGRES_SCHEMA}.{WATERMARK_TABLE} WHERE table_name = :t')
+def get_watermark(pg_engine, table: str) -> datetime | None:
+    q = text(
+        f"SELECT last_watermark_value FROM {POSTGRES_SCHEMA}.{WATERMARK_TABLE} WHERE table_name = :t"
+    )
     with pg_engine.connect() as conn:
         row = conn.execute(q, {"t": table}).fetchone()
         return row[0] if row else None
 
 
 def upsert_watermark(
-    pg_engine, table: str, incremental_column: Optional[str],
-    last_value: Optional[datetime], mode: str, rows_inserted: int, rows_updated: int,
+    pg_engine,
+    table: str,
+    incremental_column: str | None,
+    last_value: datetime | None,
+    mode: str,
+    rows_inserted: int,
+    rows_updated: int,
 ) -> None:
     q = text(f"""
         INSERT INTO {POSTGRES_SCHEMA}.{WATERMARK_TABLE}
@@ -485,10 +539,17 @@ def upsert_watermark(
             updated_at              = now()
     """)
     with pg_engine.begin() as conn:
-        conn.execute(q, {
-            "table": table, "col": incremental_column, "last_value": last_value,
-            "mode": mode, "inserted": rows_inserted, "updated": rows_updated,
-        })
+        conn.execute(
+            q,
+            {
+                "table": table,
+                "col": incremental_column,
+                "last_value": last_value,
+                "mode": mode,
+                "inserted": rows_inserted,
+                "updated": rows_updated,
+            },
+        )
 
 
 def fetch_watermark_state(pg_engine) -> list[dict]:
@@ -501,7 +562,13 @@ def fetch_watermark_state(pg_engine) -> list[dict]:
         return [dict(row._mapping) for row in conn.execute(q)]
 
 
-def insert_log(pg_engine, run_id: str, started_at: datetime, finished_at: datetime, r: "CollectionResult") -> None:
+def insert_log(
+    pg_engine,
+    run_id: str,
+    started_at: datetime,
+    finished_at: datetime,
+    r: CollectionResult,
+) -> None:
     """Best-effort audit row in public.etl_logs -- never let logging itself fail the run."""
     q = text(f"""
         INSERT INTO {POSTGRES_SCHEMA}.{LOG_TABLE}
@@ -517,18 +584,34 @@ def insert_log(pg_engine, run_id: str, started_at: datetime, finished_at: dateti
     """)
     try:
         with pg_engine.begin() as conn:
-            conn.execute(q, {
-                "run_id": run_id, "table_name": r.name, "mode": r.mode,
-                "incremental_column": r.incremental_column, "status": r.status,
-                "mongo_rows": r.mongo_rows, "postgres_rows_before": r.postgres_rows_before,
-                "batch_rows": r.batch_rows, "rows_inserted": r.rows_inserted, "rows_updated": r.rows_updated,
-                "skipped_rows": r.skipped_rows, "postgres_rows_after": r.postgres_rows_after,
-                "columns_count": r.columns, "validation_status": r.validation_status,
-                "validation_detail": r.validation_detail, "error": r.error_full or r.error,
-                "started_at": started_at, "finished_at": finished_at, "duration_seconds": r.seconds,
-            })
+            conn.execute(
+                q,
+                {
+                    "run_id": run_id,
+                    "table_name": r.name,
+                    "mode": r.mode,
+                    "incremental_column": r.incremental_column,
+                    "status": r.status,
+                    "mongo_rows": r.mongo_rows,
+                    "postgres_rows_before": r.postgres_rows_before,
+                    "batch_rows": r.batch_rows,
+                    "rows_inserted": r.rows_inserted,
+                    "rows_updated": r.rows_updated,
+                    "skipped_rows": r.skipped_rows,
+                    "postgres_rows_after": r.postgres_rows_after,
+                    "columns_count": r.columns,
+                    "validation_status": r.validation_status,
+                    "validation_detail": r.validation_detail,
+                    "error": r.error_full or r.error,
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "duration_seconds": r.seconds,
+                },
+            )
     except SQLAlchemyError:
-        log.exception(f"[{r.name}] failed to write audit row to {POSTGRES_SCHEMA}.{LOG_TABLE} (non-fatal)")
+        log.exception(
+            f"[{r.name}] failed to write audit row to {POSTGRES_SCHEMA}.{LOG_TABLE} (non-fatal)"
+        )
 
 
 def validate_collection(pg_engine, table: str, expected_after: int) -> tuple[str, str]:
@@ -545,7 +628,10 @@ def validate_collection(pg_engine, table: str, expected_after: int) -> tuple[str
 # Mongo read (pushdown filter for incremental loads)
 # ---------------------------------------------------------------------------
 def read_collection(
-    spark: SparkSession, collection: str, incremental_column: Optional[str], since: Optional[datetime]
+    spark: SparkSession,
+    collection: str,
+    incremental_column: str | None,
+    since: datetime | None,
 ) -> DataFrame:
     reader = (
         spark.read.format("mongodb")
@@ -565,7 +651,9 @@ def read_collection(
         # ordering. If the upstream data is ever migrated to real BSON
         # dates, this must switch back to the {"$date": iso} form.
         watermark_str = since.strftime("%Y-%m-%d %H:%M:%S")
-        pipeline = json.dumps([{"$match": {incremental_column: {"$gt": watermark_str}}}])
+        pipeline = json.dumps(
+            [{"$match": {incremental_column: {"$gt": watermark_str}}}]
+        )
         reader = reader.option("aggregation.pipeline", pipeline)
     return reader.load()
 
@@ -581,7 +669,9 @@ def sanitize_for_postgres(df: DataFrame, log_flattened: list) -> DataFrame:
     """
     out = df
     if PRIMARY_KEY_COLUMN in out.columns:
-        out = out.withColumn(PRIMARY_KEY_COLUMN, F.col(PRIMARY_KEY_COLUMN).cast("string"))
+        out = out.withColumn(
+            PRIMARY_KEY_COLUMN, F.col(PRIMARY_KEY_COLUMN).cast("string")
+        )
 
     for f in out.schema.fields:
         if isinstance(f.dataType, (StructType, ArrayType, MapType)):
@@ -612,12 +702,14 @@ def write_staging(df: DataFrame, staging_table: str) -> None:
         .option("url", postgres_jdbc_url())
         .option("dbtable", f"{POSTGRES_SCHEMA}.{staging_table}")
         .options(**postgres_jdbc_properties())
-        .mode("overwrite")   # scratch table -- drop/recreate fresh every run
+        .mode("overwrite")  # scratch table -- drop/recreate fresh every run
         .save()
     )
 
 
-def merge_staging_into_target(pg_engine, collection: str, staging_table: str, columns: list[str]) -> tuple[int, int]:
+def merge_staging_into_target(
+    pg_engine, collection: str, staging_table: str, columns: list[str]
+) -> tuple[int, int]:
     """INSERT ... ON CONFLICT (_id) DO UPDATE, using xmax=0 to split the
     result into (rows_inserted, rows_updated) counts. Returns that tuple."""
     quoted_cols = ", ".join(f'"{c}"' for c in columns)
@@ -657,10 +749,10 @@ def process_collection(
     full_refresh: bool,
     dry_run: bool,
     run_id: str,
-    watermark_column_override: Optional[str],
+    watermark_column_override: str | None,
 ) -> CollectionResult:
     start = time.time()
-    started_at = datetime.now()
+    started_at = datetime.now(timezone.utc)
     result = CollectionResult(name=collection)
 
     try:
@@ -672,7 +764,9 @@ def process_collection(
 
         sample = mongo_db[collection].find_one()
         sample_fields = list(sample.keys()) if sample else []
-        incremental_column = detect_incremental_column(sample_fields, watermark_column_override)
+        incremental_column = detect_incremental_column(
+            sample_fields, watermark_column_override
+        )
         result.incremental_column = incremental_column
 
         if full_refresh:
@@ -692,7 +786,9 @@ def process_collection(
             log.info(f"[{collection}] --full-refresh: truncating table before reload")
             if not dry_run:
                 with pg_engine.begin() as conn:
-                    conn.execute(text(f'TRUNCATE TABLE "{POSTGRES_SCHEMA}"."{collection}"'))
+                    conn.execute(
+                        text(f'TRUNCATE TABLE "{POSTGRES_SCHEMA}"."{collection}"')
+                    )
                 pg_before = 0
                 result.postgres_rows_before = 0
 
@@ -712,9 +808,19 @@ def process_collection(
         if batch_rows == 0:
             result.status = "SKIPPED (no new/changed rows)"
             result.postgres_rows_after = pg_before
-            result.validation_status, result.validation_detail = validate_collection(pg_engine, collection, pg_before)
+            result.validation_status, result.validation_detail = validate_collection(
+                pg_engine, collection, pg_before
+            )
             if not dry_run:
-                upsert_watermark(pg_engine, collection, incremental_column, new_watermark, result.mode, 0, 0)
+                upsert_watermark(
+                    pg_engine,
+                    collection,
+                    incremental_column,
+                    new_watermark,
+                    result.mode,
+                    0,
+                    0,
+                )
             log.info(f"[{collection}] nothing new to load (mode={result.mode})")
             return result
 
@@ -730,12 +836,16 @@ def process_collection(
         if not target_exists:
             # First-ever load for this collection: plain JDBC append both
             # creates the table (Spark infers the schema) and populates it.
-            log.info(f"[{collection}] first load: creating table and inserting {batch_rows} row(s)")
+            log.info(
+                f"[{collection}] first load: creating table and inserting {batch_rows} row(s)"
+            )
             write_direct(df, collection)
             result.rows_inserted, result.rows_updated = batch_rows, 0
             ensure_unique_id_index(pg_engine, collection)
         elif not can_merge:
-            log.warning(f"[{collection}] no \"{PRIMARY_KEY_COLUMN}\" column present -- appending instead of upserting")
+            log.warning(
+                f'[{collection}] no "{PRIMARY_KEY_COLUMN}" column present -- appending instead of upserting'
+            )
             write_direct(df, collection)
             result.rows_inserted, result.rows_updated = batch_rows, 0
         else:
@@ -746,28 +856,41 @@ def process_collection(
                 result.rows_inserted, result.rows_updated = batch_rows, 0
             else:
                 staging_table = f"_stg_{collection}"
-                log.info(f"[{collection}] merging {batch_rows} row(s) via staging table {staging_table}")
+                log.info(
+                    f"[{collection}] merging {batch_rows} row(s) via staging table {staging_table}"
+                )
                 write_staging(df, staging_table)
                 try:
-                    result.rows_inserted, result.rows_updated = merge_staging_into_target(
-                        pg_engine, collection, staging_table, df.columns
+                    result.rows_inserted, result.rows_updated = (
+                        merge_staging_into_target(
+                            pg_engine, collection, staging_table, df.columns
+                        )
                     )
                 finally:
                     drop_table(pg_engine, staging_table)
 
         expected_after = pg_before + result.rows_inserted
         result.postgres_rows_after = get_row_count(pg_engine, collection)
-        result.validation_status, result.validation_detail = validate_collection(pg_engine, collection, expected_after)
+        result.validation_status, result.validation_detail = validate_collection(
+            pg_engine, collection, expected_after
+        )
 
         if result.validation_status == "PASS":
             upsert_watermark(
-                pg_engine, collection, incremental_column, new_watermark,
-                result.mode, result.rows_inserted, result.rows_updated,
+                pg_engine,
+                collection,
+                incremental_column,
+                new_watermark,
+                result.mode,
+                result.rows_inserted,
+                result.rows_updated,
             )
             result.status = "OK"
         else:
             result.status = "VALIDATION FAILED"
-            log.error(f"[{collection}] post-load validation FAILED: {result.validation_detail}")
+            log.error(
+                f"[{collection}] post-load validation FAILED: {result.validation_detail}"
+            )
 
     except Exception as exc:  # noqa: BLE001 - we want to keep going for other collections
         result.status = "FAILED"
@@ -779,7 +902,7 @@ def process_collection(
         log.error(f"[{collection}] extraction failed: {result.error}")
     finally:
         result.seconds = time.time() - start
-        finished_at = datetime.now()
+        finished_at = datetime.now(timezone.utc)
         insert_log(pg_engine, run_id, started_at, finished_at, result)
 
     return result
@@ -788,16 +911,24 @@ def process_collection(
 # ---------------------------------------------------------------------------
 # Rich reporting
 # ---------------------------------------------------------------------------
-def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool, run_id: str, pg_engine=None):
+def render_report(
+    results: list[CollectionResult],
+    elapsed: float,
+    dry_run: bool,
+    run_id: str,
+    pg_engine=None,
+):
     console.print()
-    console.print(Panel.fit(
-        "[bold]MongoDB -> PostgreSQL Extraction Report[/bold]\n"
-        f"Database: [cyan]{config.MONGO_DB}[/cyan]  →  Schema: [cyan]{POSTGRES_SCHEMA}[/cyan]\n"
-        f"Run ID: [magenta]{run_id}[/magenta]\n"
-        f"Run finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        + ("  [yellow](DRY RUN - no data written)[/yellow]" if dry_run else ""),
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold]MongoDB -> PostgreSQL Extraction Report[/bold]\n"
+            f"Database: [cyan]{config.MONGO_DB}[/cyan]  →  Schema: [cyan]{POSTGRES_SCHEMA}[/cyan]\n"
+            f"Run ID: [magenta]{run_id}[/magenta]\n"
+            f"Run finished: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            + ("  [yellow](DRY RUN - no data written)[/yellow]" if dry_run else ""),
+            border_style="cyan",
+        )
+    )
 
     table = Table(title="Per-Collection Detail", box=box.SIMPLE_HEAVY, show_lines=False)
     table.add_column("Table", style="bold")
@@ -816,9 +947,12 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
 
     for r in results:
         status_style = {
-            "OK": "green", "DRY-RUN": "cyan",
+            "OK": "green",
+            "DRY-RUN": "cyan",
         }.get(r.status, "yellow" if "SKIPPED" in r.status else "red")
-        validation_style = {"PASS": "green", "N/A": "dim"}.get(r.validation_status, "red")
+        validation_style = {"PASS": "green", "N/A": "dim"}.get(
+            r.validation_status, "red"
+        )
         table.add_row(
             r.name,
             r.mode,
@@ -838,7 +972,9 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
 
     validation_issues = [r for r in results if r.validation_status == "FAIL"]
     if validation_issues:
-        vtable = Table(title="Post-Load Validation Detail", box=box.MINIMAL, style="red")
+        vtable = Table(
+            title="Post-Load Validation Detail", box=box.MINIMAL, style="red"
+        )
         vtable.add_column("Table")
         vtable.add_column("Detail")
         for r in validation_issues:
@@ -866,7 +1002,9 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
                 wtable.add_row(
                     row["table_name"],
                     row["incremental_column"] or "-",
-                    str(row["last_watermark_value"]) if row["last_watermark_value"] else "-",
+                    str(row["last_watermark_value"])
+                    if row["last_watermark_value"]
+                    else "-",
                     str(row["last_run_at"]),
                     row["last_run_mode"] or "-",
                     f"{row['last_run_rows_inserted']:,}",
@@ -878,9 +1016,16 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
             f"{POSTGRES_SCHEMA}.{LOG_TABLE} (run_id = {run_id}).[/dim]"
         )
 
-    flattened = {r.name: r.complex_fields_flattened for r in results if r.complex_fields_flattened}
+    flattened = {
+        r.name: r.complex_fields_flattened
+        for r in results
+        if r.complex_fields_flattened
+    }
     if flattened:
-        note = Table(title="Nested Fields Serialized to JSON (unavoidable for JDBC)", box=box.MINIMAL)
+        note = Table(
+            title="Nested Fields Serialized to JSON (unavoidable for JDBC)",
+            box=box.MINIMAL,
+        )
         note.add_column("Table")
         note.add_column("Fields")
         for name, fields_ in flattened.items():
@@ -906,11 +1051,21 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
     has_issues = bool(failed) or bool(validation_issues)
 
     outcome = Table(
-        title="Run Outcome", box=box.ROUNDED, title_style="bold",
-        header_style="bold cyan", border_style="red" if has_issues else "green",
+        title="Run Outcome",
+        box=box.ROUNDED,
+        title_style="bold",
+        header_style="bold cyan",
+        border_style="red" if has_issues else "green",
         show_lines=False,
     )
-    for col in ("Collections", "Succeeded", "Skipped", "Failed", "Validation Failures", "Run Time"):
+    for col in (
+        "Collections",
+        "Succeeded",
+        "Skipped",
+        "Failed",
+        "Validation Failures",
+        "Run Time",
+    ):
         outcome.add_column(col, justify="center")
     outcome.add_row(
         str(len(results)),
@@ -922,11 +1077,20 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
     )
 
     totals = Table(
-        title="Row Totals", box=box.ROUNDED, title_style="bold",
-        header_style="bold cyan", border_style="cyan",
+        title="Row Totals",
+        box=box.ROUNDED,
+        title_style="bold",
+        header_style="bold cyan",
+        border_style="cyan",
         show_lines=False,
     )
-    for col in ("Mongo Rows", "Inserted", "Updated", "Skipped (unchanged)", "Now in Postgres"):
+    for col in (
+        "Mongo Rows",
+        "Inserted",
+        "Updated",
+        "Skipped (unchanged)",
+        "Now in Postgres",
+    ):
         totals.add_column(col, justify="center")
     totals.add_row(
         f"{total_mongo:,}",
@@ -937,35 +1101,45 @@ def render_report(results: list[CollectionResult], elapsed: float, dry_run: bool
     )
     console.print(Columns([outcome, totals], padding=(0, 2)))
 
-    console.print(Panel(
-        f"[bold {'red' if has_issues else 'green'}]{'RUN COMPLETED WITH ISSUES' if has_issues else 'RUN COMPLETED SUCCESSFULLY'}[/bold {'red' if has_issues else 'green'}]",
-        border_style="red" if has_issues else "green",
-    ))
+    console.print(
+        Panel(
+            f"[bold {'red' if has_issues else 'green'}]{'RUN COMPLETED WITH ISSUES' if has_issues else 'RUN COMPLETED SUCCESSFULLY'}[/bold {'red' if has_issues else 'green'}]",
+            border_style="red" if has_issues else "green",
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
 # CLI / main
 # ---------------------------------------------------------------------------
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Incremental MongoDB -> PostgreSQL extractor (PySpark).")
+    parser = argparse.ArgumentParser(
+        description="Incremental MongoDB -> PostgreSQL extractor (PySpark)."
+    )
     parser.add_argument(
-        "--tables", type=str, default=None,
+        "--tables",
+        type=str,
+        default=None,
         help="Comma-separated list of collection names to process (default: all discovered collections).",
     )
     parser.add_argument(
-        "--full-refresh", action="store_true",
+        "--full-refresh",
+        action="store_true",
         help="Ignore watermark state and reload every discovered collection from scratch "
-             "(truncates existing Postgres tables before merging).",
+        "(truncates existing Postgres tables before merging).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Discover, count, and compute what would be loaded -- do not write anything to Postgres.",
     )
     parser.add_argument(
-        "--watermark-column", type=str, default=None,
+        "--watermark-column",
+        type=str,
+        default=None,
         help="Force a specific column name as the incremental watermark for every collection "
-             "(default: auto-detect per collection from "
-             f"{INCREMENTAL_COLUMN_CANDIDATES}).",
+        "(default: auto-detect per collection from "
+        f"{INCREMENTAL_COLUMN_CANDIDATES}).",
     )
     return parser.parse_args()
 
@@ -973,10 +1147,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     start = time.time()
-    run_id = f"{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
+    run_id = f"{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
 
-    console.rule("[bold cyan]mongo_exp: MongoDB -> PostgreSQL incremental extraction[/bold cyan]")
-    log.info(f"Starting run {run_id} (full_refresh={args.full_refresh}, dry_run={args.dry_run}, tables={args.tables})")
+    console.rule(
+        "[bold cyan]mongo_exp: MongoDB -> PostgreSQL incremental extraction[/bold cyan]"
+    )
+    log.info(
+        f"Starting run {run_id} (full_refresh={args.full_refresh}, dry_run={args.dry_run}, tables={args.tables})"
+    )
 
     mongo_db = get_mongo_db()
     pg_engine = create_engine(
@@ -1000,16 +1178,27 @@ def main() -> int:
 
     try:
         with Progress(
-            SpinnerColumn(), TextColumn("[bold blue]{task.fields[coll]}"),
-            BarColumn(), TextColumn("{task.completed}/{task.total}"),
-            TimeElapsedColumn(), console=console,
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.fields[coll]}"),
+            BarColumn(),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            console=console,
         ) as progress:
-            task = progress.add_task("extract", total=len(collections), coll="starting...")
+            task = progress.add_task(
+                "extract", total=len(collections), coll="starting..."
+            )
             for coll in collections:
                 progress.update(task, coll=coll)
                 res = process_collection(
-                    spark, mongo_db, pg_engine, coll, args.full_refresh, args.dry_run,
-                    run_id, args.watermark_column,
+                    spark,
+                    mongo_db,
+                    pg_engine,
+                    coll,
+                    args.full_refresh,
+                    args.dry_run,
+                    run_id,
+                    args.watermark_column,
                 )
                 results.append(res)
                 progress.advance(task)

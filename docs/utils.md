@@ -253,10 +253,10 @@ runs.
 from utils.connection import get_mongo_db, get_postgres_engine
 from utils.logger import get_logger
 
-log = get_logger("my_script")               # INFO+ to both console and file
+log = get_logger("my_script")  # INFO+ to both console and file
 log = get_logger("my_script", console_level=logging.WARNING)  # quiet console, full file
 
-db = get_mongo_db()             # cached pymongo Database
+db = get_mongo_db()  # cached pymongo Database
 engine = get_postgres_engine()  # cached SQLAlchemy Engine
 ```
 

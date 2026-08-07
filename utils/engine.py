@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
 import os
 import warnings
+
+from dotenv import load_dotenv
 
 if not load_dotenv():
     print("Warning: no .env file found, relying on system environment variables")
@@ -20,9 +21,7 @@ if POSTGRES_PORT is not None:
     try:
         POSTGRES_PORT = int(POSTGRES_PORT)
     except ValueError:
-        raise EnvironmentError(
-            f"POSTGRES_PORT must be an integer, got: {POSTGRES_PORT!r}"
-        )
+        raise OSError(f"POSTGRES_PORT must be an integer, got: {POSTGRES_PORT!r}")
 
 # Postgres schemas (medallion architecture). Optional: only needed by
 # scripts that actually build a bronze/silver/gold layout. mongo_exp.py
@@ -65,9 +64,7 @@ _required = {
 _missing = [k for k, v in _required.items() if not v]
 
 if _missing:
-    raise EnvironmentError(
-        f"Missing required environment variables: {', '.join(_missing)}"
-    )
+    raise OSError(f"Missing required environment variables: {', '.join(_missing)}")
 
 # Soft-required: only needed by scripts that build a bronze/silver/gold
 # schema layout. Missing values here don't stop the Mongo -> Postgres

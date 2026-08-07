@@ -115,7 +115,9 @@ def ensure_control_tables(engine, schema: str) -> None:
         conn.execute(text(ddl_logs))
 
 
-def seed_control_rows(engine, schema: str, table_name: str, row_count: int, col_count: int) -> None:
+def seed_control_rows(
+    engine, schema: str, table_name: str, row_count: int, col_count: int
+) -> None:
     """One OK watermark row + one OK log row per collection, mirroring what
     a real successful extract.py run leaves behind."""
     with engine.begin() as conn:
@@ -168,14 +170,18 @@ def seed_collection(engine, schema: str, fixture_path: Path) -> tuple[int, int]:
     # sanitize_for_postgres()'s F.to_json() step.
     for col in df.columns:
         if df[col].apply(lambda v: isinstance(v, (dict, list))).any():
-            df[col] = df[col].apply(lambda v: json.dumps(v) if isinstance(v, (dict, list)) else v)
+            df[col] = df[col].apply(
+                lambda v: json.dumps(v) if isinstance(v, (dict, list)) else v
+            )
 
     df.to_sql(collection, engine, schema=schema, if_exists="replace", index=False)
 
     with engine.begin() as conn:
-        conn.execute(text(
-            f'ALTER TABLE "{schema}"."{collection}" ADD PRIMARY KEY ("{PRIMARY_KEY_COLUMN}")'
-        ))
+        conn.execute(
+            text(
+                f'ALTER TABLE "{schema}"."{collection}" ADD PRIMARY KEY ("{PRIMARY_KEY_COLUMN}")'
+            )
+        )
 
     log.info(f"[{collection}] seeded {len(df)} row(s), {len(df.columns)} column(s)")
     return len(df), len(df.columns)
@@ -198,8 +204,12 @@ def main() -> int:
 
     for fixture_path in fixture_files:
         try:
-            row_count, col_count = seed_collection(engine, POSTGRES_SCHEMA_BRONZE, fixture_path)
-            seed_control_rows(engine, POSTGRES_SCHEMA_BRONZE, fixture_path.stem, row_count, col_count)
+            row_count, col_count = seed_collection(
+                engine, POSTGRES_SCHEMA_BRONZE, fixture_path
+            )
+            seed_control_rows(
+                engine, POSTGRES_SCHEMA_BRONZE, fixture_path.stem, row_count, col_count
+            )
         except Exception:
             log.exception(f"Failed to seed {fixture_path.name}")
             return 1

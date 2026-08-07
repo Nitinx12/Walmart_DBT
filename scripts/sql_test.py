@@ -38,7 +38,7 @@ import sys
 from pathlib import Path
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import ResourceClosedError
+from sqlalchemy.exc import ResourceClosedError, SQLAlchemyError
 
 from utils.logger import get_logger
 
@@ -81,10 +81,11 @@ def run_tests(test_dir: Path, log) -> bool:
                 except ResourceClosedError:
                     rows = []
 
-            except Exception as exc:
+            except SQLAlchemyError as exc:
                 # Real DB errors AND `RAISE EXCEPTION` from a DO block both
-                # land here. Either way, roll back so the connection is usable
-                # for the next test file, then record it as a failure.
+                # surface here as SQLAlchemy-wrapped DBAPI errors. Either way,
+                # roll back so the connection is usable for the next test
+                # file, then record it as a failure.
                 conn.rollback()
                 all_passed = False
                 log.error(f"{sql_file.name}: FAIL - {exc}")
@@ -98,7 +99,9 @@ def run_tests(test_dir: Path, log) -> bool:
                 for row in rows[:PREVIEW_ROWS]:
                     log.debug(f"  {sql_file.name} -> {row}")
                 if len(rows) > PREVIEW_ROWS:
-                    log.debug(f"  {sql_file.name} -> ... {len(rows) - PREVIEW_ROWS} more row(s), see full query for details")
+                    log.debug(
+                        f"  {sql_file.name} -> ... {len(rows) - PREVIEW_ROWS} more row(s), see full query for details"
+                    )
 
     return all_passed
 

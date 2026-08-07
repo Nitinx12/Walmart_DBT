@@ -81,7 +81,7 @@ def walmart_medallion_pipeline():
     def preflight() -> str:
         return _PREAMBLE + (
             'installed="$(uv run python -c '
-            '\'import pyspark; print(pyspark.__version__)\' 2>/dev/null || true)"; '
+            "'import pyspark; print(pyspark.__version__)' 2>/dev/null || true)\"; "
             f'if [ -z "$installed" ]; then '
             f'echo "pyspark not found, installing {REQUIRED_PYSPARK_VERSION}"; '
             f'uv add "pyspark=={REQUIRED_PYSPARK_VERSION}"; '
