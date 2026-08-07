@@ -84,7 +84,7 @@ jobs:
 
       - name: Install Airflow (constraints-pinned)
         run: |
-          PY="$(python -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          PY="$(uv run python -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
           CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY}.txt"
           uv pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
 
