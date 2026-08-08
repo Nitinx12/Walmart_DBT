@@ -15,31 +15,32 @@
 --                        are supplied
 --
 -- Parameters:
---   p_schema                    TEXT               - schema containing the tables above
---                                                    (default: 'public'). Resolved
---                                                       with %I, so it cannot be used for
---                                                      SQL injection.
---   p_granularity               TEXT                  - day | week | month | quarter | year
---                                                      (default: 'month')
---   p_start_date                DATE                 - trend window start (default: the
---                                                     earliest order_timestamp on file)
---   p_end_date                  DATE                 - trend window end (default: today)
---   p_product_id                INTEGER              - filter fact_order_items.product_id
---   p_category_id               BIGINT               - filter dim_products.category_id
---   p_brand_id                  BIGINT               - filter dim_products.brand_id
---   p_customer_id               INTEGER              - filter dim_orders.customer_id
---   p_include_inactive_items    BOOLEAN              - if FALSE (default),
---                                                    excludes fact_order_items
---                                                    and dim_orders rows where
---                                                    is_active = FALSE
---   p_moving_avg_periods        INTEGER               - window size for the
---                                                     trailing moving average
---                                                     of revenue (default: 3,
---                                                     clamped to a minimum of 1)
---   p_sort_direction            TEXT                  - ASC | DESC on period_start
---                                                     (default: ASC, i.e.
---                                                     oldest period first,
---                                                     since this is a trend)
+--   p_schema                    TEXT     - schema containing the tables
+--                                          above (default: 'public').
+--                                          Resolved with %I, so it cannot
+--                                          be used for SQL injection.
+--   p_granularity               TEXT     - day | week | month | quarter |
+--                                          year (default: 'month')
+--   p_start_date                DATE     - trend window start (default:
+--                                          the earliest order_timestamp
+--                                          on file)
+--   p_end_date                  DATE     - trend window end
+--                                          (default: today)
+--   p_product_id                INTEGER  - filter fact_order_items.product_id
+--   p_category_id               BIGINT   - filter dim_products.category_id
+--   p_brand_id                  BIGINT   - filter dim_products.brand_id
+--   p_customer_id               INTEGER  - filter dim_orders.customer_id
+--   p_include_inactive_items    BOOLEAN  - if FALSE (default), excludes
+--                                          fact_order_items and dim_orders
+--                                          rows where is_active = FALSE
+--   p_moving_avg_periods        INTEGER  - window size for the trailing
+--                                          moving average of revenue
+--                                          (default: 3, clamped to a
+--                                          minimum of 1)
+--   p_sort_direction            TEXT     - ASC | DESC on period_start
+--                                          (default: ASC, i.e. oldest
+--                                          period first, since this is
+--                                          a trend)
 --
 -- Returns:
 --   One row per period in [p_start_date, p_end_date] at the requested grain.

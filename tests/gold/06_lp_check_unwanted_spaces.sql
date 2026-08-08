@@ -2,7 +2,8 @@
 ===============================================================================
 Script Name : Gold Layer - Unwanted Spaces Validation
 Schema      : gold
-Purpose     : Validate all string columns in the Gold schema for unwanted spaces.
+Purpose     : Validate all string columns in the Gold schema for
+              unwanted spaces.
 
 Checks Performed:
     1. Leading spaces

@@ -19,12 +19,15 @@
 --                                          resolved with %I so this cannot
 --                                          be used for SQL injection.
 --   p_customer_id               INTEGER   - filter to a single customer_id
---   p_start_date                DATE      - order_timestamp lower bound (inclusive)
---   p_end_date                  DATE      - order_timestamp upper bound (inclusive)
+--   p_start_date                DATE      - order_timestamp lower bound
+--                                          (inclusive)
+--   p_end_date                  DATE      - order_timestamp upper bound
+--                                          (inclusive)
 --   p_order_status              VARCHAR  - filter dim_orders.order_status
 --   p_is_active                 BOOLEAN - filter dim_customers.is_active
 --   p_include_inactive_orders   BOOLEAN - if FALSE (default), excludes orders
---                                          and order items where is_active = FALSE
+--                                          and order items where
+--                                          is_active = FALSE
 --   p_country                   VARCHAR - filter dim_customers.country
 --   p_province                  VARCHAR - filter dim_customers.province
 --   p_city                      VARCHAR - filter dim_customers.city
@@ -34,7 +37,8 @@
 --                                          customer_name, days_since_last_order
 --                                          (default: total_spent)
 --   p_sort_direction            TEXT   - ASC | DESC (default: DESC)
---   p_limit                     INTEGER - cap on returned rows (default: no cap)
+--   p_limit                     INTEGER - cap on returned rows
+--                                          (default: no cap)
 --
 -- Returns:
 --   TABLE of one row per customer matching the filters, with order/item
@@ -287,10 +291,14 @@ $function$;
 -- Example usage
 -- ============================================================================
 -- Top 10 customers by spend, active customers only (tables in 'gold' schema):
---   SELECT * FROM fn_customer_report(p_schema := 'gold', p_is_active := TRUE, p_limit := 10);
+--   SELECT * FROM fn_customer_report(
+--       p_schema := 'gold', p_is_active := TRUE, p_limit := 10
+--   );
 --
 -- Single customer, full history:
---   SELECT * FROM fn_customer_report(p_schema := 'gold', p_customer_id := 4521);
+--   SELECT * FROM fn_customer_report(
+--       p_schema := 'gold', p_customer_id := 4521
+--   );
 --
 -- Delhi customers, orders in Q1 2026, sorted by most recent order:
 --   SELECT * FROM fn_customer_report(
@@ -304,7 +312,8 @@ $function$;
 --
 -- Reconciliation check - customers where order total and line-item total
 -- disagree by more than a rounding tolerance:
---   SELECT customer_id, customer_name, total_spent, total_line_item_amount, amount_variance
+--   SELECT customer_id, customer_name, total_spent,
+--          total_line_item_amount, amount_variance
 --   FROM fn_customer_report(p_schema := 'gold')
 --   WHERE ABS(amount_variance) > 0.01
 --   ORDER BY ABS(amount_variance) DESC;

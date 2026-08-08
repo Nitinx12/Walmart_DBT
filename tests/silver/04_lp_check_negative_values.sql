@@ -1,7 +1,8 @@
 /*
 ===============================================================================
  Script Name : 04_lp_check_negative_values.sql
- Description : Check all numeric columns in the silver schema for negative values.
+ Description : Check all numeric columns in the silver schema for
+               negative values.
 ===============================================================================
 */
 

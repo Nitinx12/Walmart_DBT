@@ -97,4 +97,4 @@ INNER JOIN gold.dim_products AS p2
     ON pp.product_b_id = p2.product_id
 CROSS JOIN total_orders AS t
 ORDER BY
-    basket_count DESC, pair_rank ASC;
+    pp.basket_count DESC, pair_rank ASC;

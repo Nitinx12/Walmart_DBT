@@ -146,15 +146,21 @@ $procedure$;
 -- Deployment
 -- ============================================================================
 -- Attach to every bronze table that has bronze_loaded_at:
---   CALL sp_attach_loaded_at_triggers('bronze', 'bronze_loaded_at', 'fn_set_bronze_loaded_at');
+--   CALL sp_attach_loaded_at_triggers(
+--       'bronze', 'bronze_loaded_at', 'fn_set_bronze_loaded_at'
+--   );
 --
 -- Attach to every gold table that has gold_loaded_at (dim_customers,
 -- dim_orders, fact_order_items, dim_products, dim_categories, dim_brands
 -- all qualify based on the columns you've shared):
---   CALL sp_attach_loaded_at_triggers('gold', 'gold_loaded_at', 'fn_set_gold_loaded_at');
+--   CALL sp_attach_loaded_at_triggers(
+--       'gold', 'gold_loaded_at', 'fn_set_gold_loaded_at'
+--   );
 --
 -- Optional, if silver also carries a silver_loaded_at column:
---   CALL sp_attach_loaded_at_triggers('silver', 'silver_loaded_at', 'fn_set_silver_loaded_at');
+--   CALL sp_attach_loaded_at_triggers(
+--       'silver', 'silver_loaded_at', 'fn_set_silver_loaded_at'
+--   );
 --
 -- Re-run any of the above any time after adding new tables to a schema -
 -- it will only add triggers where the column exists, and replaces any

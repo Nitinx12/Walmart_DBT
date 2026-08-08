@@ -82,13 +82,13 @@ SELECT
     inactive_order_count,
     ROUND(
         100.0 * total_orders
-        / NULLIF((SELECT total_orders FROM overall_agg), 0),
+        / NULLIF((SELECT overall_agg.total_orders FROM overall_agg), 0),
         2
     ) AS pct_of_all_orders,
     ROUND(total_revenue, 2) AS total_revenue,
     ROUND(
         100.0 * total_revenue
-        / NULLIF((SELECT total_revenue FROM overall_agg), 0),
+        / NULLIF((SELECT overall_agg.total_revenue FROM overall_agg), 0),
         2
     ) AS pct_of_total_revenue,
     ROUND(avg_order_value, 2) AS avg_order_value

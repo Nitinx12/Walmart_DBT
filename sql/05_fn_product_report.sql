@@ -17,10 +17,12 @@
 --                            (ETL load time, not sale date)
 --
 -- Parameters:
---   p_schema                       TEXT       - schema containing all five tables
---                                               above (default: 'public').
---                                               Resolved with %I, so it cannot be
---                                               used for SQL injection.
+--   p_schema                       TEXT       - schema containing all
+--                                               five tables above
+--                                               (default: 'public').
+--                                               Resolved with %I, so it
+--                                               cannot be used for SQL
+--                                               injection.
 --   p_product_id                   INTEGER    - filter to a single product_id
 --   p_category_id                  BIGINT     - filter dim_products.category_id
 --   p_brand_id                     BIGINT     - filter dim_products.brand_id
