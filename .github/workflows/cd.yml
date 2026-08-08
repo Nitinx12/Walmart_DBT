@@ -55,8 +55,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-pipeline.outputs.tags }}
           labels: ${{ steps.meta-pipeline.outputs.labels }}
-          cache-from: type=gha,scope=walmart-pipeline
-          cache-to: type=gha,mode=max,scope=walmart-pipeline
+          cache-from: type=gha,scope=walmart-pipeline:ci
+          cache-to: type=gha,mode=max,scope=walmart-pipeline:ci
 
       # ── walmart-airflow (Airflow services image) ─────────────
       - name: Metadata — walmart-airflow
@@ -77,5 +77,5 @@ jobs:
           push: true
           tags: ${{ steps.meta-airflow.outputs.tags }}
           labels: ${{ steps.meta-airflow.outputs.labels }}
-          cache-from: type=gha,scope=walmart-airflow
-          cache-to: type=gha,mode=max,scope=walmart-airflow
+          cache-from: type=gha,scope=walmart-airflow:ci
+          cache-to: type=gha,mode=max,scope=walmart-airflow:ci
