@@ -24,6 +24,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pandas>=3.0.5",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.1",
     "sqlfluff>=4.2.2",
     "sqlfluff-templater-dbt>=4.2.2",
