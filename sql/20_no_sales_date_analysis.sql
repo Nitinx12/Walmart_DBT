@@ -44,7 +44,7 @@ Created On  : 2026-08-06
 ===============================================================================
 */
 
-WITH calendar AS (
+WITH calendar_base AS (
     SELECT
         GENERATE_SERIES(
             (
