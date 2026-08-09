@@ -118,7 +118,6 @@ desktop.ini
 # ==========================
 airflow.db
 airflow-webserver.pid
-airflow.cfg
 logs/
 dags/__pycache__/
 
