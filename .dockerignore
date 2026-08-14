@@ -64,3 +64,4 @@ Dockerfile
 
 # Logs
 logs
+airflow/logs

@@ -13,7 +13,7 @@
 # vars are set and waits for Postgres to accept connections before handing
 # off to CMD via exec "$@".
 
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-17-jdk-headless \
