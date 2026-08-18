@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "employee-1",
+    "employee_id": "1",
+    "store_id": "1",
+    "first_name": "Grace",
+    "last_name": "Hopper",
+    "email": "grace@example.com",
+    "job_title": "Manager",
+    "is_active": "Y",
+    "salary": "75000",
+    "created_timestamp": "2025-01-01 09:00:00",
+    "updated_timestamp": "2025-01-02 09:00:00"
+  }
+]

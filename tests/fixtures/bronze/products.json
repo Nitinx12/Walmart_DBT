@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "product-1",
+    "product_id": "1",
+    "product_name": "Notebook",
+    "brand": "Acme",
+    "category": "Office",
+    "is_active": "Y",
+    "price": "10.00",
+    "created_timestamp": "2025-01-01 09:00:00",
+    "updated_timestamp": "2025-01-02 09:00:00"
+  }
+]

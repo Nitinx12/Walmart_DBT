@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "order-item-1",
+    "order_item_id": "1",
+    "order_id": "1",
+    "product_id": "1",
+    "is_active": "Y",
+    "quantity": "2",
+    "unit_price": "10.00",
+    "line_amount": "20.00",
+    "created_timestamp": "2025-01-03 10:00:00",
+    "updated_timestamp": "2025-01-03 10:00:00"
+  }
+]

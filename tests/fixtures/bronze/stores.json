@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "store-1",
+    "store_id": "1",
+    "store_name": "Downtown Store",
+    "city": "Toronto",
+    "province": "ON",
+    "country": "Canada",
+    "is_active": "Y",
+    "created_timestamp": "2025-01-01 09:00:00",
+    "updated_timestamp": "2025-01-02 09:00:00"
+  }
+]

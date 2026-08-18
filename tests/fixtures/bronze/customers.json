@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "customer-1",
+    "customer_id": "1",
+    "first_name": "Ada",
+    "last_name": "Lovelace",
+    "phone": "555-555-0101",
+    "email": "ada@example.com",
+    "is_active": "Y",
+    "city": "Toronto",
+    "province": "ON",
+    "country": "Canada",
+    "created_timestamp": "2025-01-01 09:00:00",
+    "updated_timestamp": "2025-01-02 09:00:00"
+  }
+]
