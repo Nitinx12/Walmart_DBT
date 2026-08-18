@@ -3,7 +3,7 @@ sources:
   - name: bronze
     database: walmart_db
     schema: bronze
-    description: "This source contain the raw data from postgres bronze schema"
+    description: "This source contains raw data from the Postgres bronze schema."
 
     tables:
       - name: customers

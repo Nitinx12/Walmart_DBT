@@ -19,18 +19,17 @@ Every file is numbered in the order it's meant to be read/run, from foundational
 | 08 | `order_status_analysis.sql` | Report | Order breakdown by status, with an "ALL STATUSES" total row — [detailed below](#08-order_status_analysis--status-breakdown-with-totals) |
 | 09 | `payment_method_analysis.sql` | Report | Same pattern as 08, sliced by payment method instead of status |
 | 10 | `ranking_analysis.sql` | Report | Top-N ranking report (customers/products) via window functions |
-| 11 | `kpl_summary_report.sql`¹ | Report | Executive KPI dashboard — [detailed below](#11-kpl_summary_report--executive-kpi-dashboard) |
+| 11 | `kpi_summary_report.sql` | Report | Executive KPI dashboard — [detailed below](#11-kpi_summary_report--executive-kpi-dashboard) |
 | 12 | `customer_segmentation.sql` | Report | Revenue-tier customer segmentation — [detailed below](#12-customer_segmentation--revenue-tier-segmentation) |
 | 13 | `customer_cohort_analysis.sql` | Report | Cohorts customers by first-order period, tracks behavior over time |
 | 14 | `customer_activity_summary.sql` | Report | Per-customer recency/frequency activity rollup |
 | 15 | `pareto_revenue_analysis.sql` | Report | 80/20 revenue-contribution analysis (cumulative-revenue pattern, same family as 18) |
 | 16 | `store_performance_summary.sql` | Report | Store/location-level performance rollup |
 | 17 | `market_basket_analysis.sql` | Report | Product-affinity / "bought together" analysis |
-| 18 | `ABC_classfication.sql`¹ | Report | ABC inventory classification — [detailed below](#18-abc_classfication--abc-inventory-classification) |
+| 18 | `abc_classification.sql` | Report | ABC inventory classification — [detailed below](#18-abc_classification--abc-inventory-classification) |
 | 19 | `repeat_purchase_analysis.sql` | Report | Repeat vs. one-time purchaser breakdown |
 | 20 | `no_sales_date_analysis.sql` | Report | Finds gaps — dates/periods with zero sales activity |
 
-¹ Filenames kept as-is from the repo (`kpl_summary_report`, `ABC_classfication`) even though the natural spellings are "kpi" and "classification" — worth a rename at some point, but noted here so the docs match what's actually on disk.
 
 > Descriptions for files not walked through below (01–03, 05–07, 09–10, 13–17, 19–20) are inferred from filename + the conventions the other 5 files establish, not from reading their SQL directly. All of them, per the framing above, query gold — none of them create or load it.
 
@@ -132,7 +131,7 @@ ORDER BY sort_order, order_count DESC;
 
 ---
 
-## 11 · `kpl_summary_report` — executive KPI dashboard
+## 11 · `kpi_summary_report` — executive KPI dashboard
 
 A single flat list of headline metrics — customers, products, orders, revenue — shaped for a BI card/tile layout rather than a table of rows and columns.
 
@@ -217,7 +216,7 @@ ORDER BY CASE customer_segment
 
 ---
 
-## 18 · `ABC_classfication` — ABC inventory classification
+## 18 · `abc_classification` — ABC inventory classification
 
 Classic inventory-prioritization analysis: rank products by revenue, walk a cumulative-revenue running total down the ranked list, and split into A (top 80% of revenue), B (next 15%), C (remaining 5%).
 

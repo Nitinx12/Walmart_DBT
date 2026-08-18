@@ -138,7 +138,7 @@ as *expected* behavior, not confirmed line-by-line.
 
 | File | Presumed check |
 |---|---|
-| `01_lp_check_bronze_tables.sql` | All expected bronze tables (`customers`, `orders`, `order_items`, `products`, `stores`, `employees` — matching `soucre.yml`) actually exist in the schema |
+| `01_lp_check_bronze_tables.sql` | All expected bronze tables (`customers`, `orders`, `order_items`, `products`, `stores`, `employees` — matching `source.yml`) actually exist in the schema |
 | `02_lp_check_columns_exist.sql.sql` | Every expected column is present on each bronze table (note the doubled `.sql.sql` extension — a filename typo, harmless: a `*.sql` glob still matches it since it ends in `.sql`) |
 | `03_lp_check_metadata_columns.sql` | Load/metadata columns (e.g. an extraction timestamp) exist and are populated on every bronze table |
 
