@@ -45,8 +45,7 @@ flowchart LR
     PUB --> P2["ghcr.io/&lt;owner&gt;/walmart-airflow<br/>:sha, :latest, :vX.Y.Z"]
 ```
 
-Both images are tagged by short SHA (always), `latest` (on `main`), and
-semver (only if the commit is tagged `vX.Y.Z`). No live deployment
+Both images are tagged by short SHA (always) and `latest` (on `main`). No live deployment
 target exists for this project — the pipeline runs locally via
 `run_pipeline.ps1` or the Airflow compose stack — so "CD" here means
 *publish a versioned, pullable image*, not *deploy to a server*. If that
