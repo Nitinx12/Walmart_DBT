@@ -13,6 +13,10 @@ permissions:
 env:
   REGISTRY: ghcr.io
 
+concurrency:
+  group: publish-ghcr
+  cancel-in-progress: false
+
 jobs:
   publish:
     if: >-
@@ -45,7 +49,6 @@ jobs:
           tags: |
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
 
       - name: Build & push walmart-pipeline
         uses: docker/build-push-action@v6
@@ -67,7 +70,6 @@ jobs:
           tags: |
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
 
       - name: Build & push walmart-airflow
         uses: docker/build-push-action@v6
