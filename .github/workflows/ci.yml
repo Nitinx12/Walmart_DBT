@@ -6,12 +6,17 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  PYTHON_VERSION: "3.12"
+  # Matches the Airflow image's Python runtime; the standalone image's
+  # Python 3.12 runtime is also covered by the project requirement.
+  PYTHON_VERSION: "3.11"
   AIRFLOW_VERSION: "3.3.0"
 
 jobs:
@@ -184,6 +189,10 @@ jobs:
 
       - run: uv python install ${{ env.PYTHON_VERSION }}
       - run: uv sync --frozen
+
+      - name: Install dbt packages
+        working-directory: walmart_dbt
+        run: uv run dbt deps
 
       # NOTE: this assumes a `scripts/ci_seed_bronze.py` fixture loader that
       # writes sample rows straight into the bronze schema, bypassing Mongo —
