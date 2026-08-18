@@ -40,7 +40,9 @@ Every arrow into silver and gold is a **quality gate**, not a formality the next
 
 ## Orchestration — one pipeline, run three ways
 
-The same 7 stages run locally via PowerShell, in a standalone Docker image, or on a schedule in Airflow:
+The same 7 stages run locally via PowerShell or on a schedule in Airflow. The
+standalone Docker image currently packages the project and validates Postgres
+startup, but `main.py` is a scaffold and does not yet run the ETL stages:
 
 ```mermaid
 flowchart TD
@@ -64,7 +66,7 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 | **Incremental extraction** | Watermark-based `$gt` pushdown from Mongo, real `MERGE`-style upserts, automatic fallback when no watermark or unique index exists |
 | **Modeling** | 17 dbt models (9 silver + 8 gold), 100+ tests, SCD Type 2 snapshots |
 | **Data quality** | Two independent QA layers — dbt-native tests *and* a standalone schema-driven SQL suite — wired in as separate pipeline stages |
-| **Runners** | Windows/PowerShell, standalone Docker image, Airflow DAG — all executing the identical 7 stages |
+| **Runners** | Windows/PowerShell and Airflow DAG execute the seven stages; the standalone Docker image is a buildable scaffold |
 | **Containerization** | Docker Compose stack (CeleryExecutor: scheduler, workers, triggerer, Redis) plus a self-contained pipeline image |
 | **CI/CD** *(in progress)* | Lint, DAG-integrity checks, and a live bronze→silver→gold run against Postgres on every PR; images published to GHCR on merge — [`docs/ci_cd.md`](docs/ci_cd.md) |
 
@@ -78,11 +80,11 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 # Local, Windows
 ./pipeline/run_pipeline.ps1
 
-# Standalone container
+# Standalone container scaffold (does not run ETL stages yet)
 docker run --env-file .env walmart-pipeline
 
 # Full Airflow stack
-docker compose -f docker/docker-compose.yaml up
+docker compose -f docker/compose.yml up
 ```
 
 ## Full documentation
@@ -91,7 +93,7 @@ This README is the pitch. Everything below is the engineering detail:
 
 | Doc | Covers |
 |---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Full system design every diagram above, expanded |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Full system design and execution-path status |
 | [`docs/airflow.md`](docs/airflow.md) | The DAG, task by task |
 | [`docs/dbt.md`](docs/dbt.md) | Models, grain, SCD types, tests |
 | [`docs/docker.md`](docs/docker.md) | Both images, why two, build details |
@@ -99,6 +101,7 @@ This README is the pitch. Everything below is the engineering detail:
 | [`docs/scripts.md`](docs/scripts.md) | `extract.py`'s incremental vs. full-reload logic |
 | [`docs/tests.md`](docs/tests.md) | What the raw SQL checks actually check |
 | [`docs/utils.md`](docs/utils.md) | Shared config/connection/logging |
+| [`docs/project_health_and_security.md`](docs/project_health_and_security.md) | Local health and security checks |
 
 Full pipeline script (`run_pipeline.ps1`): [view on Google Drive](https://drive.google.com/file/d/1vSPYN8GvC5cFMEHf7EVjwSq4HHAbCZRF/view?usp=sharing)
 

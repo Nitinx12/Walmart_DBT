@@ -18,7 +18,7 @@ full; this file is the overview, not a replacement for `docs/*.md`.
 ## Contents
 
 1. [System overview](#1-system-overview)
-2. [Three runners, one pipeline](#2-three-runners-one-pipeline)
+2. [Execution paths and implementation status](#2-execution-paths-and-implementation-status)
 3. [Runtime topology](#3-runtime-topology--whats-actually-running-where)
 4. [The medallion layers, and what gates each transition](#4-the-medallion-layers-and-what-gates-each-transition)
 5. [Two independent test systems](#5-two-independent-test-systems--dont-conflate-them)
@@ -36,9 +36,10 @@ full; this file is the overview, not a replacement for `docs/*.md`.
 A **medallion-architecture ETL pipeline**: it pulls operational data out
 of MongoDB, lands it as raw bronze tables in Postgres, cleans and
 deduplicates it into silver, and reshapes it into a dimensional gold
-layer — validated by SQL checks and dbt tests at every handoff, and
-runnable directly on Windows, as a standalone Docker container, or
-orchestrated by Airflow.
+layer — validated by SQL checks and dbt tests at every handoff. The full
+pipeline is currently runnable directly on Windows or through Airflow; the
+standalone Docker image is built and published, but its `main.py` command is
+still a scaffold and does not yet execute the pipeline.
 
 ```mermaid
 flowchart LR
@@ -67,25 +68,25 @@ to build from it — see [§4](#4-the-medallion-layers-and-what-gates-each-trans
 
 ---
 
-## 2. Three runners, one pipeline
+## 2. Execution paths and implementation status
 
-The project deliberately exposes **one logical pipeline through three
-separate entry points**. They aren't three different pipelines — they're
-three runners for the same seven stages, kept in lockstep by convention.
+The project has **one logical seven-stage pipeline** and two complete ways to
+run it. `pipeline/run_pipeline.ps1` is the local Windows runner; the Airflow
+DAG runs the same gates as individual containerized tasks. A standalone Docker
+image is also defined, but it is not a third runner yet: `main.py` currently
+only prints a placeholder message after `entrypoint.sh` checks Postgres.
 
 ```mermaid
 flowchart TD
-    subgraph Entry["Entry points"]
-        WIN["pipeline/run_pipeline.ps1<br/>local, interactive, Windows"]
-        DOCK["docker run walmart-pipeline<br/>standalone container, main.py"]
-        AF["Airflow DAG<br/>walmart_medallion_pipeline<br/>scheduled / containerized"]
+    subgraph Implemented["Implemented execution paths"]
+        WIN["pipeline/run_pipeline.ps1<br/>Windows host"]
+        AF["Airflow DAG<br/>airflow-worker container"]
     end
 
     WIN --> STAGES
-    DOCK --> STAGES
     AF --> STAGES
 
-    subgraph STAGES["Same 7 stages, in order"]
+    subgraph STAGES["Logical gates, in order"]
         direction TB
         S0["0. Preflight — pyspark/mongo-connector version check"]
         S1["1. Extract — Mongo → bronze"]
@@ -96,21 +97,26 @@ flowchart TD
         S6["6. Gold SQL tests"]
         S0-->S1-->S2-->S3-->S4-->S5-->S6
     end
+
+    subgraph Scaffold["Standalone Docker image — scaffold only"]
+        IMG["docker/Dockerfile"] --> ENTRY["entrypoint.sh<br/>checks Postgres"]
+        ENTRY --> MAIN["main.py<br/>placeholder; no ETL stages"]
+    end
 ```
 
-| | `run_pipeline.ps1` | Standalone `docker run` | Airflow DAG |
+| | `run_pipeline.ps1` | Airflow DAG | Standalone `docker run` |
 |---|---|---|---|
-| **Where it runs** | Directly on the Windows host | Any Docker host, self-contained image | `airflow-worker` container in the compose stack |
-| **Stop-on-failure** | Manual — every stage checks `$LASTEXITCODE`, calls `Stop-Pipeline` | Same script logic, inside the container's `main.py`/entrypoint chain | Automatic — Airflow's default `all_success` trigger rule |
-| **`.env` loading** | `Import-DotEnv` — custom line-by-line PowerShell parser | `--env-file .env` passed to `docker run` | `source .env` inside each task's shell, via the DAG's `_PREAMBLE` |
-| **`localhost` correctness** | Correct as-is — runs on the host | Corrected via env vars passed at `docker run` time | Rewritten to `host.docker.internal` in `_PREAMBLE` |
-| **Code delivery** | Already on disk | Baked in at build time (`COPY . .`) | Bind-mounted (`../..:/app`), no rebuild for code changes |
-| **Full detail** | [`docs/pipeline.md`](docs/pipeline.md) | [`docs/docker.md`](docs/docker.md) §4, §6–7 | [`docs/airflow.md`](docs/airflow.md) |
+| **Where it runs** | Directly on the Windows host | `airflow-worker` in the Compose stack | Any Docker host, self-contained image |
+| **Stop-on-failure** | Each stage checks `$LASTEXITCODE` and calls `Stop-Pipeline` | Airflow's default `all_success` trigger rule blocks downstream tasks | Not applicable: no stages run |
+| **`.env` loading** | `Import-DotEnv` line-by-line parser | Each task sources `.env` in the DAG `_PREAMBLE` | Supplied at `docker run` time, but unused by placeholder `main.py` |
+| **`localhost` correctness** | Correct as-is on the host | `_PREAMBLE` rewrites host services to `host.docker.internal` | Must be supplied correctly by the caller when the image is implemented |
+| **Code delivery** | Already on disk | Project bind-mounted at `/app` | Baked into the image with `COPY . .` |
+| **Status** | Implemented | Implemented | Buildable scaffold; not an ETL runner |
 
-**The rule that keeps all three honest:** changing the stage order,
-adding a stage, or redefining "success" for one means updating the
-Windows script *and* the DAG. Nothing enforces this automatically — it's
-a documented convention, not a technical guarantee.
+> **Maintenance rule:** Any change to stage order or success criteria must be
+> made in both `run_pipeline.ps1` and the Airflow DAG. When `main.py` is
+> implemented as a runner, it must join that same contract before it is
+> documented as a third execution path.
 
 ---
 
@@ -124,9 +130,9 @@ flowchart TB
         HOSTMONGO[("MongoDB<br/>host.docker.internal:27017")]
     end
 
-    subgraph Standalone["Standalone image path"]
+    subgraph Standalone["Standalone image path — scaffold"]
         IMG1["walmart-pipeline image<br/>python:3.12-slim + JDK 17 + uv"]
-        RUN1["container: entrypoint.sh waits for Postgres,<br/>then exec uv run main.py"]
+        RUN1["entrypoint.sh waits for Postgres,<br/>then execs placeholder main.py"]
         IMG1 --> RUN1
     end
 
@@ -150,15 +156,14 @@ flowchart TB
     TRIG --> MPG
     WORK -- "bash task execution" --> HOSTDB
     WORK --> HOSTMONGO
-    RUN1 --> HOSTDB
-    RUN1 --> HOSTMONGO
+    RUN1 -. "does not currently execute ETL" .-> HOSTDB
 ```
 
 Two independent images exist because they serve two different purposes
 — see [§6](#6-two-docker-images-two-jobs). Only `airflow-worker` ever
 executes pipeline logic; every other Airflow service is
 scheduling, serving, or metadata machinery. Full breakdown:
-[`docs/docker.md`](docs/docker.md) §1, [`docs/airflow.md`](docs/airflow.md) §1.
+[`docker.md`](docker.md) §1, [`airflow.md`](airflow.md) §1.
 
 ---
 
@@ -228,7 +233,7 @@ flowchart TD
     DPROD --> DCAT
 ```
 
-Full model-by-model grain, SCD type, and test list: [`docs/dbt.md`](docs/dbt.md) §4–5.
+Full model-by-model grain, SCD type, and test list: [`dbt.md`](dbt.md) §4–5.
 
 ---
 
@@ -261,11 +266,12 @@ flowchart LR
 | Defined in | `schema.yml` per model | Individual `.sql` files, one rule each |
 | Invoked as | `dbt test --select silver` / `gold` | `uv run python scripts/sql_test.py tests/<layer>` |
 | Convention | dbt's own pass/fail semantics | Auto-detected per file: either "SELECT returns violating rows" or "DO block raises an exception" |
-| Full detail | [`docs/dbt.md`](docs/dbt.md) | [`docs/tests.md`](docs/tests.md), [`docs/scripts.md`](docs/scripts.md) §2 |
+| Full detail | [`dbt.md`](dbt.md) | [`tests.md`](tests.md), [`scripts.md`](scripts.md) §2 |
 
-Both are wired into every runner (`run_pipeline.ps1`, the Airflow DAG,
-`main.py` inside the standalone container) as separate pipeline stages,
-not as a single combined "testing" step.
+Both are wired into the implemented runners (`run_pipeline.ps1` and the
+Airflow DAG) as separate pipeline stages, not as a single combined "testing"
+step. The standalone image does not invoke either test system until `main.py`
+is implemented as a runner.
 
 ---
 
@@ -278,19 +284,19 @@ flowchart TD
         DFA["docker/Dockerfile.airflow"]
     end
 
-    DF -- "COPY . . (code baked in)<br/>base: python:3.12-slim" --> IMG1["walmart-pipeline<br/>self-contained image"]
-    IMG1 -- "docker run --env-file .env" --> RUN1["standalone container<br/>entrypoint.sh waits for Postgres,<br/>then CMD: uv run main.py"]
+    DF -- "COPY . . (code baked in)<br/>base: python:3.12-slim" --> IMG1["walmart-pipeline<br/>self-contained scaffold image"]
+    IMG1 -- "docker run --env-file .env" --> RUN1["standalone container<br/>entrypoint.sh waits for Postgres,<br/>then CMD: placeholder main.py"]
 
     DFA -- "base: apache/airflow:3.3.0-python3.11<br/>+ JDK 17, uv" --> IMG2["docker-airflow-* image<br/>nearly empty of project code"]
     IMG2 --> SVC["every airflow-* service"]
-    COMPOSE["docker-compose.yaml"] -- "bind mount ../ → /app<br/>(code changes need no rebuild)" --> SVC
+    COMPOSE["docker/compose.yml"] -- "bind mount ../ → /app<br/>(code changes need no rebuild)" --> SVC
 ```
 
-Both images share the same JDK, `uv` install, and `PYSPARK_*`/`SPARK_*`
-env vars, so pipeline behavior is identical regardless of which runner
-triggered it — what differs is *how code gets in* (`COPY` vs. bind mount)
-and *what needs correcting for a container network* ([§7](#7-the-localhost-problem-solved-once-applied-twice)).
-Full rationale, Dockerfile line-by-line: [`docs/docker.md`](docs/docker.md) §1–5.
+Both images share JDK 17, `uv`, and PySpark environment variables, but only
+the Airflow image currently executes pipeline stages. The standalone image is
+still valuable for validating its build and future packaging work; it must not
+be presented as behaviorally equivalent to the Windows or Airflow runners.
+Full rationale, Dockerfile line-by-line: [`docker.md`](docker.md) §1–5.
 
 ---
 
@@ -309,16 +315,17 @@ flowchart TD
 
     ENV -->|"sourced, then corrected<br/>in the DAG's _PREAMBLE"| AF["Airflow @task.bash:<br/>POSTGRES_HOST → host.docker.internal<br/>MONGO_URI host → host.docker.internal<br/>PYSPARK_PYTHON forced to Linux path"]
 
-    ENV -->|"sourced via --env-file,<br/>overridden at docker run time"| STANDALONE["standalone container:<br/>same corrections applied<br/>via docker/.env or docker run flags"]
+    ENV -. "supplied by docker run;<br/>no ETL currently runs" .-> STANDALONE["standalone image scaffold"]
 
     style ENV fill:#4a5568,color:#fff
 ```
 
 Why this design: `.env` is referenced by multiple independent files
 (`run_pipeline.ps1` included), so correcting it in place would break the
-one context where it's already right. Every container-specific fix
-happens in the consuming layer instead. Full mechanics:
-[`docs/airflow.md`](docs/airflow.md) §3, [`docs/docker.md`](docs/docker.md) §9.
+one context where it's already right. Every container-specific fix happens in
+the consuming layer instead. The standalone image has no ETL configuration
+rewrite yet because `main.py` is not an implemented runner. Full mechanics:
+[`airflow.md`](airflow.md) §3, [`docker.md`](docker.md) §9.
 
 ---
 
@@ -351,7 +358,7 @@ flowchart TD
 Every collection is auto-discovered from Mongo — nothing is hardcoded —
 and every run produces a Rich console report plus two Postgres control
 tables (`etl_watermarks`, `etl_logs`) for auditability. Full logic,
-including the string-vs-BSON-date watermark gotcha: [`docs/scripts.md`](docs/scripts.md) §1.
+including the string-vs-BSON-date watermark gotcha: [`scripts.md`](scripts.md) §1.
 
 ---
 
@@ -373,7 +380,7 @@ flowchart TD
 The key design choice: validation happens at **import time**, not
 lazily, so a broken `.env` fails immediately with every missing variable
 listed at once — instead of surfacing three layers deep inside a
-database driver, minutes into a run. Full detail: [`docs/utils.md`](docs/utils.md).
+database driver, minutes into a run. Full detail: [`utils.md`](utils.md).
 
 ---
 
@@ -382,8 +389,8 @@ database driver, minutes into a run. Full detail: [`docs/utils.md`](docs/utils.m
 ```
 walmart
 ├─ airflow/                 → dags/walmart_pipeline_dag.py, plus bind-mounted logs/plugins/config
-├─ docker/                  → Dockerfile, Dockerfile.airflow, docker-compose.yaml, entrypoint.sh, dbt/profiles.yml
-├─ docs/                    → this level of documentation (airflow.md, dbt.md, docker.md, pipeline.md, scripts.md, tests.md, utils.md)
+├─ docker/                  → Dockerfile, Dockerfile.airflow, compose.yml, entrypoint.sh, dbt/profiles.yml
+├─ docs/                    → architecture and operational guides, including project_health_and_security.md
 ├─ jars/                    → Mongo Spark connector + Postgres JDBC jars, checked in for offline Spark startup
 ├─ pipeline/                → run_pipeline.ps1 (Windows entry point)
 ├─ scripts/                 → extract.py (Mongo → bronze), sql_test.py (SQL test runner)
@@ -393,7 +400,9 @@ walmart
 ├─ walmart_dbt/             → dbt project: silver + gold models, schema tests, custom generics
 ├─ reports/                 → generated markdown reports + chart PNGs (brand/category analysis)
 ├─ notebooks/               → exploratory Mongo notebook
-├─ main.py                  → entry point for the standalone Docker image
+├─ health_check.py          → Rich local runtime-health report
+├─ security_check.py        → Rich static secret and hardening report
+├─ main.py                  → placeholder entry point for the standalone Docker image
 └─ pyproject.toml / uv.lock → dependency management via uv
 ```
 
@@ -403,10 +412,11 @@ walmart
 
 | Question | Doc |
 |---|---|
-| How does the Airflow DAG work, task by task? | [`docs/airflow.md`](docs/airflow.md) |
-| What do the dbt models actually do, layer by layer? | [`docs/dbt.md`](docs/dbt.md) |
-| How are the two Docker images built, and what broke getting them running? | [`docs/docker.md`](docs/docker.md) |
-| What does the Windows entry-point script do? | [`docs/pipeline.md`](docs/pipeline.md) |
-| How does `extract.py` decide incremental vs. full reload? | [`docs/scripts.md`](docs/scripts.md) |
-| What do the raw SQL data-quality checks actually check? | [`docs/tests.md`](docs/tests.md) |
-| Where does config/connection/logging come from? | [`docs/utils.md`](docs/utils.md) |
+| How does the Airflow DAG work, task by task? | [`airflow.md`](airflow.md) |
+| What do the dbt models actually do, layer by layer? | [`dbt.md`](dbt.md) |
+| How are the two Docker images built, and what broke getting them running? | [`docker.md`](docker.md) |
+| What does the Windows entry-point script do? | [`pipeline.md`](pipeline.md) |
+| How do I assess local runtime health and security posture? | [`project_health_and_security.md`](project_health_and_security.md) |
+| How does `extract.py` decide incremental vs. full reload? | [`scripts.md`](scripts.md) |
+| What do the raw SQL data-quality checks actually check? | [`tests.md`](tests.md) |
+| Where does config/connection/logging come from? | [`utils.md`](utils.md) |
