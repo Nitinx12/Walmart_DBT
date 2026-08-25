@@ -6,7 +6,7 @@
     "customer_id": "1",
     "order_status": "Completed",
     "is_active": "Y",
-    "payment_method": "Card",
+    "payment_method": "Credit Card",
     "total_amount": "20.00",
     "order_timestamp": "2025-01-03 10:00:00",
     "created_timestamp": "2025-01-03 10:00:00",
