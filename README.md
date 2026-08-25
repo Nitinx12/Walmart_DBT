@@ -44,9 +44,18 @@ The same 7 stages run locally via PowerShell or on a schedule in Airflow. The
 standalone Docker image currently packages the project and validates Postgres
 startup, but `main.py` is a scaffold and does not yet run the ETL stages:
 
-<p align="center">
-  <img src="assets/task_image.png" alt="Pipeline stages: Preflight, Extract, Bronze SQL tests, dbt run + test silver, Silver SQL tests, dbt run + test gold, Gold SQL tests" width="850"/>
-</p>
+```mermaid
+flowchart TD
+    S0["0 · Preflight"] --> S1["1 · Extract<br/>Mongo → bronze"]
+    S1 --> S2["2 · Bronze SQL tests"]
+    S2 --> S3["3 · dbt run + test — silver"]
+    S3 --> S4["4 · Silver SQL tests"]
+    S4 --> S5["5 · dbt run + test — gold"]
+    S5 --> S6["6 · Gold SQL tests"]
+
+    classDef stage fill:#1a2a3a,color:#fff,stroke:#4a90d9
+    class S0,S1,S2,S3,S4,S5,S6 stage
+```
 
 In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rules stopping the DAG the moment any stage fails. Full DAG + task-by-task detail: [`docs/airflow.md`](docs/airflow.md).
 
