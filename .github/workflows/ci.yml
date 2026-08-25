@@ -102,12 +102,16 @@ jobs:
           uv run python - <<'PY'
           from airflow.models import DagBag
 
+          # DagBag.bag_dag() already performs cycle detection while it collects
+          # DAGs (via airflow.utils.dag_cycle_tester), and any
+          # AirflowDagCycleException it hits is captured into bag.import_errors —
+          # so the assert below covers both import errors and cycles.
+          # (There used to be an explicit dag.test_cycle() call here, but that
+          # method was removed from the DAG class in Airflow 2.0; the equivalent
+          # is now the standalone airflow.utils.dag_cycle_tester.test_cycle().)
           bag = DagBag(dag_folder="airflow/dags", include_examples=False)
           assert not bag.import_errors, f"DAG import errors: {bag.import_errors}"
           assert len(bag.dags) > 0, "No DAGs discovered in airflow/dags"
-
-          for dag_id, dag in bag.dags.items():
-              dag.test_cycle()  # raises AirflowDagCycleException if a cycle exists
 
           print(f"OK — loaded {len(bag.dags)} DAG(s): {list(bag.dags)}")
           PY
