@@ -101,6 +101,7 @@ This README is the pitch. Everything below is the engineering detail:
 | [`docs/scripts.md`](docs/scripts.md) | `extract.py`'s incremental vs. full-reload logic |
 | [`docs/tests.md`](docs/tests.md) | What the raw SQL checks actually check |
 | [`docs/utils.md`](docs/utils.md) | Shared config/connection/logging |
+| [`docs/CI_CD.md`](docs/CI_CD.md)  | See how CI/CD works |
 | [`docs/project_health_and_security.md`](docs/project_health_and_security.md) | Local health and security checks |
 
 Full pipeline script (`run_pipeline.ps1`): [view on Google Drive](https://drive.google.com/file/d/1vSPYN8GvC5cFMEHf7EVjwSq4HHAbCZRF/view?usp=sharing)
