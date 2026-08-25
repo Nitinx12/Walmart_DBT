@@ -189,7 +189,11 @@ jobs:
       # any import of utils.connection fails without them. Dummy values only.
       MONGO_URI: mongodb://localhost:27017
       MONGO_DB: unused_in_ci
-      DBT_PROFILES_DIR: docker/dbt
+      # Absolute path: the dbt run/test steps below set working-directory:
+      # walmart_dbt, so a relative "docker/dbt" here would resolve to
+      # walmart_dbt/docker/dbt (doesn't exist) instead of the repo root's
+      # docker/dbt/profiles.yml.
+      DBT_PROFILES_DIR: ${{ github.workspace }}/docker/dbt
       # `python scripts/foo.py` puts scripts/ (not the repo root) on sys.path,
       # so `from utils.connection import ...` can't resolve. Pytest handles
       # this automatically (that's why unit-tests never hit it); every direct
@@ -239,4 +243,3 @@ jobs:
 
       - name: Gold SQL checks
         run: uv run python scripts/sql_test.py tests/gold
-    
