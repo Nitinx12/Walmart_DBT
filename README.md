@@ -59,6 +59,10 @@ flowchart TD
 
 In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rules stopping the DAG the moment any stage fails. Full DAG + task-by-task detail: [`docs/airflow.md`](docs/airflow.md).
 
+<p align="center">
+  <img src="assets/task_image.png" alt="Pipeline stages: Preflight, Extract, Bronze SQL tests, dbt run + test silver, Silver SQL tests, dbt run + test gold, Gold SQL tests" width="850"/>
+</p>
+
 ## Highlights
 
 | Area | What's there |
