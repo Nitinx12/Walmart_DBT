@@ -190,6 +190,11 @@ jobs:
       MONGO_URI: mongodb://localhost:27017
       MONGO_DB: unused_in_ci
       DBT_PROFILES_DIR: docker/dbt
+      # `python scripts/foo.py` puts scripts/ (not the repo root) on sys.path,
+      # so `from utils.connection import ...` can't resolve. Pytest handles
+      # this automatically (that's why unit-tests never hit it); every direct
+      # `uv run python scripts/....py` call below needs it set explicitly.
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
 
@@ -234,4 +239,4 @@ jobs:
 
       - name: Gold SQL checks
         run: uv run python scripts/sql_test.py tests/gold
-  
+    
