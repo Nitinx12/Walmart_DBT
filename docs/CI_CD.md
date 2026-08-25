@@ -1,76 +1,103 @@
-# CI/CD
+# CI/CD — Explained Simply
 
-Two GitHub Actions workflows, kept separate on purpose: `ci.yml` (runs on
-every PR and every push to `main`) and `cd.yml` (runs only after `ci.yml`
-succeeds on `main`, and publishes images). CD never runs off the back of
-a workflow that hasn't been graded — that's the point of the
-`workflow_run` trigger instead of a shared `push` trigger.
+## What CI and CD actually mean
 
-## 1. CI — five jobs, same gate logic as `run_pipeline.ps1`
+**CI (Continuous Integration)** — every time someone pushes code or opens
+a PR, a robot automatically checks it: does it follow style rules? Do the
+tests pass? Does it build? You find out in minutes, not after it breaks
+something in production.
 
-```mermaid
-flowchart TD
-    LINT["lint<br/>ruff + sqlfluff"]
-    LINT --> UNIT["unit-tests<br/>pytest tests/unit"]
-    LINT --> DAG["dag-integrity<br/>DagBag import + cycle check"]
-    LINT --> BUILD["docker-build<br/>both Dockerfiles, no push"]
-    UNIT --> INT["integration<br/>live Postgres 16 service"]
-    DAG --> INT
+**CD (Continuous Delivery)** — once CI says the code on `main` is good,
+another robot automatically packages it (here: Docker images) and
+publishes it somewhere people can pull it from.
 
-    subgraph INT["integration — the real gate"]
-        direction TB
-        B["seed bronze fixtures"] --> BT["3 bronze SQL checks"]
-        BT -->|gate| SM["dbt run --select silver"]
-        SM --> ST["dbt test + 9 silver SQL checks"]
-        ST -->|gate| GM["dbt run --select gold"]
-        GM --> GT["dbt test + 7 gold SQL checks"]
-    end
-```
-
-`integration` mirrors [§4 of `ARCHITECTURE.md`](../ARCHITECTURE.md#4-the-medallion-layers-and-what-gates-each-transition)
-almost exactly — same three gates, same two independent test systems —
-except MongoDB is never in the loop. Fixtures are written straight into
-`bronze`, because CI needs to be deterministic and shouldn't depend on a
-live Mongo instance.
-
-**`docker-build` validates, it doesn't publish.** It exists purely to
-catch a broken `Dockerfile` on a PR — the actual push happens in CD.
-
-## 2. CD — publish on a green `main`
+In this project: **`ci.yml`** is the checker. **`cd.yml`** is the
+publisher. They're two separate files on purpose — CD only ever runs on
+code that CI has already approved.
 
 ```mermaid
 flowchart LR
-    CI["ci.yml passes on main"] -->|workflow_run: success| PUB["cd.yml: publish"]
-    PUB --> P1["ghcr.io/&lt;owner&gt;/walmart-pipeline<br/>:sha, :latest, :vX.Y.Z"]
-    PUB --> P2["ghcr.io/&lt;owner&gt;/walmart-airflow<br/>:sha, :latest, :vX.Y.Z"]
+    A["You push code"] --> B["CI runs checks"]
+    B -->|"fails"| C["Fix it, push again"]
+    B -->|"passes, on main"| D["CD publishes Docker images"]
 ```
 
-Both images are tagged by short SHA (always) and `latest` (on `main`). No live deployment
-target exists for this project — the pipeline runs locally via
-`run_pipeline.ps1` or the Airflow compose stack — so "CD" here means
-*publish a versioned, pullable image*, not *deploy to a server*. If that
-changes later (e.g. a scheduled Airflow host), `cd.yml` is where a
-`docker compose pull && docker compose up -d` step over SSH would go.
+---
 
-## 3. What still needs to exist in the repo for this to run green
+## What CI does here — 5 jobs
 
-| Needed | Why | Where |
+```mermaid
+flowchart TD
+    LINT["1. Lint<br/>style + SQL formatting"]
+    LINT --> UNIT["2. Unit tests"]
+    LINT --> DAG["3. Airflow DAG check"]
+    LINT --> BUILD["4. Docker build check"]
+    UNIT --> INT["5. Integration test"]
+    DAG --> INT
+```
+
+| Job | What it checks, in plain terms |
+|---|---|
+| **lint** | Is the code and SQL formatted consistently? Runs first — no point running slow tests on messy code. |
+| **unit-tests** | Do the small, isolated pieces of Python code (`utils/`, `extract.py` logic) work correctly? |
+| **dag-integrity** | Does the Airflow pipeline definition actually load without errors or circular dependencies? |
+| **docker-build** | Do both Docker images actually build? This job never pushes anything — it just proves the `Dockerfile`s aren't broken. |
+| **integration** | The real test: spin up a throwaway Postgres, load fake sample data, and run the **entire** bronze → silver → gold pipeline exactly like it would run for real. |
+
+### Integration — the important one
+
+This job rebuilds the whole medallion pipeline against a temporary
+database, using fake data instead of real MongoDB:
+
+```mermaid
+flowchart LR
+    A["Load fake bronze data"] --> B["Check bronze data"]
+    B --> C["Build silver layer"]
+    C --> D["Check silver data"]
+    D --> E["Build gold layer"]
+    E --> F["Check gold data"]
+```
+
+Each arrow is a **gate**: if a check fails, everything after it stops.
+This mirrors exactly what `run_pipeline.ps1` and the real Airflow DAG do
+— CI is just running the same logic somewhere disposable, so a bug is
+caught before it ever touches real data.
+
+---
+
+## What CD does here
+
+```mermaid
+flowchart LR
+    A["CI passes on main"] --> B["Build 2 Docker images"]
+    B --> C["Push to GitHub's<br/>container registry (GHCR)"]
+```
+
+Two images get built and published:
+
+- `walmart-pipeline` — the standalone image
+- `walmart-airflow` — the image the Airflow stack runs on
+
+Both get tagged with the commit's short SHA and `latest`. There's no
+live server this deploys to — "CD" here just means *make a fresh,
+pullable image available*, not *push to a website*. If this project
+ever gets a real always-on host, that's where a deploy step would be
+added to `cd.yml`.
+
+**Why CD waits for CI, instead of running on every push directly:**
+if `cd.yml` triggered on `push` the same way `ci.yml` does, it could
+publish a broken image the moment code lands on `main`, before anyone
+knows it's broken. Instead, `cd.yml` triggers on `ci.yml` finishing —
+and only publishes if that run succeeded.
+
+---
+
+## The short version
+
+| | Runs when | Job |
 |---|---|---|
-| `tests/unit/` with pytest coverage for `utils/` and `extract.py` | `unit-tests` job currently has nothing to collect | new folder |
-| `scripts/ci_seed_bronze.py` | writes fixture rows into `bronze` schema so `integration` doesn't need live Mongo | new script |
-| A `ci` target in `docker/dbt/profiles.yml` pointing at `localhost:5432` / `walmart` / `walmart` | `dbt run --target ci` needs it | edit existing file |
-| `ruff` + `sqlfluff` as dev dependencies, plus a `[tool.ruff]` / `.sqlfluff` config | `lint` job assumes both are installed via `uv sync` | `pyproject.toml`, `.sqlfluff` |
+| **CI** | Every PR, every push to `main` | Catch problems early |
+| **CD** | Only after CI passes on `main` | Publish trusted, working images |
 
-The `ci_seed_bronze.py` fixture loader is the one piece worth getting
-right rather than guessing at — it has to match the actual bronze
-column shapes `extract.py`'s `sanitize_for_postgres()` produces. Share
-`utils/connection.py` and one bronze table's DDL and this can be
-generated to match exactly rather than approximated.
-
-## 4. Required repo settings
-
-- **Settings → Actions → General → Workflow permissions**: "Read and
-  write permissions", so `cd.yml` can push to GHCR with the default
-  `GITHUB_TOKEN` (no PAT needed).
-- **Settings → Packages**: after the first successful `cd.yml` run,
-  link the two new packages to this repo if they don't auto-link.
+If you remember one thing: **CI protects `main`, CD only ships what CI
+already approved.**
