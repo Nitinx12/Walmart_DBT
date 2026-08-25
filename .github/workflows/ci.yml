@@ -98,6 +98,8 @@ jobs:
           uv pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
 
       - name: Import every DAG, fail on any import error
+        env:
+          AIRFLOW__CORE__LOAD_EXAMPLES: "false"
         run: |
           uv run python - <<'PY'
           from airflow.models import DagBag
@@ -109,7 +111,11 @@ jobs:
           # (There used to be an explicit dag.test_cycle() call here, but that
           # method was removed from the DAG class in Airflow 2.0; the equivalent
           # is now the standalone airflow.utils.dag_cycle_tester.test_cycle().)
-          bag = DagBag(dag_folder="airflow/dags", include_examples=False)
+          #
+          # Example DAGs are excluded via AIRFLOW__CORE__LOAD_EXAMPLES=false
+          # (env var) rather than an include_examples= constructor arg, since
+          # Airflow 3.x's DagBag no longer accepts that keyword.
+          bag = DagBag(dag_folder="airflow/dags")
           assert not bag.import_errors, f"DAG import errors: {bag.import_errors}"
           assert len(bag.dags) > 0, "No DAGs discovered in airflow/dags"
 
@@ -228,3 +234,4 @@ jobs:
 
       - name: Gold SQL checks
         run: uv run python scripts/sql_test.py tests/gold
+  
