@@ -83,7 +83,7 @@ SELECT
             THEN 'No Sales'
         ELSE 'Sales Day'
     END AS sales_status
-FROM calendar AS c
+FROM calendar_base AS c
 LEFT JOIN daily_sales AS ds
     ON c.sales_date = ds.sales_date
 ORDER BY
