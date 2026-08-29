@@ -27,32 +27,21 @@ Console output stays minimal (one line per test). Full detail — including
 failing rows or exception messages — goes to the rotating log file under
 logs/, via utils/logger.py.
 
-Reads Postgres connection info from environment variables (loaded from .env
-by run_pipeline.ps1 before this is called):
-    POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE,
-    POSTGRES_USERNAME, POSTGRES_PASSWORD
+Postgres connection comes from utils.connection.get_postgres_engine(), which
+loads .env via utils/engine.py the same way every other script in this
+project does. No orchestrator needed to run this standalone.
 """
 
-import os
 import sys
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import ResourceClosedError, SQLAlchemyError
 
+from utils.connection import get_postgres_engine
 from utils.logger import get_logger
 
 PREVIEW_ROWS = 5
-
-
-def get_engine():
-    host = os.environ["POSTGRES_HOST"]
-    port = os.environ["POSTGRES_PORT"]
-    db = os.environ["POSTGRES_DATABASE"]
-    user = os.environ["POSTGRES_USERNAME"]
-    pw = os.environ["POSTGRES_PASSWORD"]
-    url = f"postgresql+psycopg2://{user}:{pw}@{host}:{port}/{db}"
-    return create_engine(url)
 
 
 def run_tests(test_dir: Path, log) -> bool:
@@ -61,7 +50,7 @@ def run_tests(test_dir: Path, log) -> bool:
         log.warning(f"No .sql test files found in {test_dir}")
         return True
 
-    engine = get_engine()
+    engine = get_postgres_engine()
     all_passed = True
 
     with engine.connect() as conn:

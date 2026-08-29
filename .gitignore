@@ -20,6 +20,7 @@ htmlcov/
 venv/
 env/
 ENV/
+.venv_old
 
 # ==========================
 # Environment Variables
