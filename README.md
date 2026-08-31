@@ -5,12 +5,19 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-source-47A248?logo=mongodb&logoColor=white)
 ![PySpark](https://img.shields.io/badge/PySpark-3.5.x-E25A1C?logo=apachespark&logoColor=white)
 ![Medallion](https://img.shields.io/badge/Architecture-Medallion-D4AF37)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://walmartdbt-b3fdfqwyky3ghzr5syyxtu.streamlit.app/)
 
 # <img src="assets/dbt-logo.png" width="40" height="40" valign="middle"/> Walmart Medallion Data Pipeline
 
 A production-style **MongoDB → PostgreSQL → dbt** pipeline: incremental PySpark extraction, a tested medallion warehouse (bronze → silver → gold), orchestrated with **Airflow**, containerized with **Docker**, and gated by two independent layers of data-quality checks at every handoff.
 
 Built to mirror how a real analytics-engineering team would ship this not a notebook demo.
+
+## 📊 Live Dashboard
+
+**[→ Try the interactive sales dashboard](https://your-app-name.streamlit.app)**
+
+A Streamlit + Plotly dashboard reading from the gold star schema — revenue trends, store/category/brand breakdowns, top products and customers, all with period-over-period KPI deltas. The hosted demo runs against a separate, seeded database with anonymized sample data (see [`scripts/seed_demo_db.py`](scripts/seed_demo_db.py)) — it is not the live production pipeline. Full write-up: [`dashboard/README.md`](dashboard/README.md).
 
 ## Architecture at a glance
 
@@ -68,11 +75,12 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 | **Data quality** | Two independent QA layers — dbt-native tests *and* a standalone schema-driven SQL suite — wired in as separate pipeline stages |
 | **Runners** | Windows/PowerShell and Airflow DAG execute the seven stages; the standalone Docker image is a buildable scaffold |
 | **Containerization** | Docker Compose stack (CeleryExecutor: scheduler, workers, triggerer, Redis) plus a self-contained pipeline image |
+| **Dashboard** | Streamlit + Plotly dashboard querying the gold schema directly — [live demo](https://your-app-name.streamlit.app), source in [`dashboard/`](dashboard/) |
 | **CI/CD** | Lint, DAG-integrity checks, and a live bronze→silver→gold run against Postgres on every PR; images published to GHCR on merge — [`docs/ci_cd.md`](docs/CI_CD.md) |
 
 ## Tech stack
 
-`Python` · `PySpark` · `dbt-core` · `PostgreSQL` · `MongoDB` · `Apache Airflow` · `Docker` · `PowerShell` · `uv`
+`Python` · `PySpark` · `dbt-core` · `PostgreSQL` · `MongoDB` · `Apache Airflow` · `Docker` · `PowerShell` · `Streamlit` · `Plotly` · `uv`
 
 ## Run it
 
@@ -85,6 +93,9 @@ docker run --env-file .env walmart-pipeline
 
 # Full Airflow stack
 docker compose -f docker/compose.yml up
+
+# Sales dashboard (reads from your local gold schema)
+uv run streamlit run dashboard/app.py
 ```
 
 ## Full documentation
@@ -103,6 +114,7 @@ This README is the pitch. Everything below is the engineering detail:
 | [`docs/utils.md`](docs/utils.md) | Shared config/connection/logging |
 | [`docs/CI_CD.md`](docs/CI_CD.md)  | See how CI/CD works |
 | [`docs/project_health_and_security.md`](docs/project_health_and_security.md) | Local health and security checks |
+| [`dashboard/README.md`](dashboard/README.md) | Dashboard design: schema, caching, chart choices |
 
 Full pipeline script (`run_pipeline.ps1`): [view on Google Drive](https://drive.google.com/file/d/1vSPYN8GvC5cFMEHf7EVjwSq4HHAbCZRF/view?usp=sharing)
 
