@@ -24,8 +24,23 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import os
+
 import plotly.express as px
 import streamlit as st
+
+# On Streamlit Community Cloud there is no .env file — config is supplied
+# via the app's "Secrets" panel instead, exposed as st.secrets. utils/engine.py
+# reads plain os.getenv(...) and validates at import time, so those secrets
+# need to land in os.environ *before* anything below imports dashboard.queries
+# (which imports utils.engine). Locally, where .env + python-dotenv already
+# populate the environment, st.secrets is simply empty/absent and this is a
+# no-op.
+try:
+    for _key, _value in st.secrets.items():
+        os.environ.setdefault(_key, str(_value))
+except Exception:
+    pass  # no secrets.toml locally — expected, .env handles it instead
 
 from dashboard.queries import (
     Filters,
