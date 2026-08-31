@@ -154,7 +154,8 @@ jobs:
   # ────────────────────────────────────────────────────────────
   # 5. Integration — the real medallion gate, against live Postgres
   #    bronze → (3 checks) → silver → (dbt test + 9 checks) →
-  #    gold → (dbt test + 7 checks), same gate logic as run_pipeline.ps1
+  #    gold → (dbt test + 7 checks) → Great Expectations,
+  #    same gate logic as run_pipeline.ps1
   # ────────────────────────────────────────────────────────────
   integration:
     needs: [unit-tests, dag-integrity]
@@ -243,3 +244,6 @@ jobs:
 
       - name: Gold SQL checks
         run: uv run python scripts/sql_test.py tests/gold
+
+      - name: Great Expectations checks
+        run: uv run python -m pipeline.data_quality.run --layer all
