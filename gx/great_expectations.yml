@@ -1,0 +1,321 @@
+# Welcome to Great Expectations! Always know what to expect from your data.
+#
+# Here you can define datasources, batch kwargs generators, integrations and
+# more. This file is intended to be committed to your repo. For help with
+# configuration please:
+#   - Read our docs: https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview/#2-configure-your-datasource
+#   - Join our slack channel: http://greatexpectations.io/slack
+
+# config_version refers to the syntactic version of this config file, and is used in maintaining backwards compatibility
+# It is auto-generated and usually does not need to be changed.
+config_version: 4.0
+
+# This config file supports variable substitution which enables: 1) keeping
+# secrets out of source control & 2) environment-based configuration changes
+# such as staging vs prod.
+#
+# When GX encounters substitution syntax (like `my_key: ${my_value}` or
+# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
+# to replace the value of `my_key` with the value from an environment
+# variable `my_value` or a corresponding key read from this config file,
+# which is defined through the `config_variables_file_path`.
+# Environment variables take precedence over variables defined here.
+#
+# Substitution values defined here can be a simple (non-nested) value,
+# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
+#
+#
+# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
+
+
+config_variables_file_path: uncommitted/config_variables.yml
+
+# The plugins_directory will be added to your python path for custom modules
+# used to override and extend Great Expectations.
+plugins_directory: plugins/
+
+stores:
+# Stores are configurable places to store things like Expectations, Validations
+# Data Docs, and more. These are for advanced users only - most users can simply
+# leave this section alone.
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: expectations/
+
+  validation_results_store:
+    class_name: ValidationResultsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/validations/
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      suppress_store_backend_id: true
+      base_directory: checkpoints/
+
+  validation_definition_store:
+    class_name: ValidationDefinitionStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: validation_definitions/
+
+expectations_store_name: expectations_store
+validation_results_store_name: validation_results_store
+checkpoint_store_name: checkpoint_store
+
+data_docs_sites:
+  # Data Docs make it simple to visualize data quality in your project. These
+  # include Expectations, Validations & Profiles. The are built for all
+  # Datasources from JSON artifacts in the local repo including validations &
+  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
+  local_site:
+    class_name: SiteBuilder
+    show_how_to_buttons: true
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+fluent_datasources:
+  walmart_postgres:
+    type: postgres
+    id: 73f07a02-8deb-4ab1-96f7-dccadc00e32e
+    assets:
+      bronze_customers:
+        type: table
+        id: 55aadc6a-55c0-4487-a6db-3309e564d31a
+        batch_metadata: {}
+        batch_definitions:
+          customers_batch:
+            id: e73dd101-7d8c-4520-a524-8b18ce01454f
+            partitioner:
+        table_name: customers
+        schema_name: bronze
+      bronze_employees:
+        type: table
+        id: 2c8ca582-668c-45e6-a54f-b7fc8f364954
+        batch_metadata: {}
+        batch_definitions:
+          employees_batch:
+            id: 04f1067d-fa10-477e-addc-db8db0c21175
+            partitioner:
+        table_name: employees
+        schema_name: bronze
+      bronze_order_items:
+        type: table
+        id: 54d0fd28-9f79-4335-9b8e-cf44b499fee1
+        batch_metadata: {}
+        batch_definitions:
+          order_items_batch:
+            id: cdfff0e4-125c-482a-a4d4-e4e9ce6d2f55
+            partitioner:
+        table_name: order_items
+        schema_name: bronze
+      bronze_orders:
+        type: table
+        id: 6be71f11-dbf7-4665-b407-d6233d18421e
+        batch_metadata: {}
+        batch_definitions:
+          orders_batch:
+            id: 53dd1125-f59b-476b-98ea-094adef2224f
+            partitioner:
+        table_name: orders
+        schema_name: bronze
+      bronze_products:
+        type: table
+        id: 28a8ca55-0c35-4bc9-840e-91f139ade23a
+        batch_metadata: {}
+        batch_definitions:
+          products_batch:
+            id: 500b99ba-0c07-476d-a450-b8cc899f905c
+            partitioner:
+        table_name: products
+        schema_name: bronze
+      bronze_stores:
+        type: table
+        id: 20762d41-c9b1-4b18-926c-19f93d140cc5
+        batch_metadata: {}
+        batch_definitions:
+          stores_batch:
+            id: eb160b30-1faa-4f19-b88d-c4653a18268a
+            partitioner:
+        table_name: stores
+        schema_name: bronze
+      silver_brands:
+        type: table
+        id: 5e89cfa0-db86-4c70-926d-bb4e622e7879
+        batch_metadata: {}
+        batch_definitions:
+          silver_brands_batch:
+            id: 2ecd64e4-5c0a-4adb-83db-577c2f4bc4e5
+            partitioner:
+        table_name: brands
+        schema_name: silver
+      silver_categories:
+        type: table
+        id: 397df254-4e4b-44a6-9625-e43166cd7829
+        batch_metadata: {}
+        batch_definitions:
+          silver_categories_batch:
+            id: 41038d92-fb76-4862-b4ba-c8e2550a3054
+            partitioner:
+        table_name: categories
+        schema_name: silver
+      silver_customers:
+        type: table
+        id: e53d8dfc-5666-4176-9edb-16e8c29f5451
+        batch_metadata: {}
+        batch_definitions:
+          silver_customers_batch:
+            id: 845a1fdd-8d34-4e2e-83b6-ba7a748940b8
+            partitioner:
+        table_name: customers
+        schema_name: silver
+      silver_employees:
+        type: table
+        id: a38c0f71-b9f1-4336-b3c7-3c730892bba8
+        batch_metadata: {}
+        batch_definitions:
+          silver_employees_batch:
+            id: 068ab843-6e3f-446d-8cf7-d54096692ed4
+            partitioner:
+        table_name: employees
+        schema_name: silver
+      silver_order_items:
+        type: table
+        id: aa879cf4-abcb-48f7-880d-a17cc64dd699
+        batch_metadata: {}
+        batch_definitions:
+          silver_order_items_batch:
+            id: 00e113a7-8397-4a30-9dc3-1f2fdcff9f0c
+            partitioner:
+        table_name: order_items
+        schema_name: silver
+      silver_orders:
+        type: table
+        id: 8315cf0d-9506-4839-bf9b-51b2062b39a5
+        batch_metadata: {}
+        batch_definitions:
+          silver_orders_batch:
+            id: 696375bb-33d1-4dac-ab22-3ee3944aa3cc
+            partitioner:
+        table_name: orders
+        schema_name: silver
+      silver_payment_methods:
+        type: table
+        id: b4342b42-1d73-499f-bc0e-ce11dde4b09a
+        batch_metadata: {}
+        batch_definitions:
+          silver_payment_methods_batch:
+            id: 7805722b-1e47-487d-9938-d297d1d283be
+            partitioner:
+        table_name: payment_methods
+        schema_name: silver
+      silver_products:
+        type: table
+        id: 2ca62a77-8ef4-4523-8eae-d662116cfa38
+        batch_metadata: {}
+        batch_definitions:
+          silver_products_batch:
+            id: 150b0abb-a96c-46ea-b887-b9661b8f1454
+            partitioner:
+        table_name: products
+        schema_name: silver
+      silver_stores:
+        type: table
+        id: 05c609dd-703a-4dae-9d34-fbacb71b3feb
+        batch_metadata: {}
+        batch_definitions:
+          silver_stores_batch:
+            id: b6e80a49-4d5e-45b2-99e4-27cc9240cf59
+            partitioner:
+        table_name: stores
+        schema_name: silver
+      gold_dim_brands:
+        type: table
+        id: ef040618-9bff-40db-a647-7cd54547b7c7
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_brands_batch:
+            id: 24b738c9-0c13-4947-9891-8ff64998d152
+            partitioner:
+        table_name: dim_brands
+        schema_name: gold
+      gold_dim_categories:
+        type: table
+        id: 26fd1bb3-57d5-41be-a160-2bd9a6c661cf
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_categories_batch:
+            id: b0556da4-b13f-43e0-be43-bbd6d9380571
+            partitioner:
+        table_name: dim_categories
+        schema_name: gold
+      gold_dim_customers:
+        type: table
+        id: 1d502f97-3e1b-4ae6-8431-343c091c1396
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_customers_batch:
+            id: caeadad6-ed33-4035-bf4d-88e3b98b3640
+            partitioner:
+        table_name: dim_customers
+        schema_name: gold
+      gold_dim_orders:
+        type: table
+        id: 7e03213e-2fe1-493d-9bc3-27538382f21f
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_orders_batch:
+            id: 21def672-0e20-420f-baa1-408510754eaa
+            partitioner:
+        table_name: dim_orders
+        schema_name: gold
+      gold_dim_payment_methods:
+        type: table
+        id: 6961a1bb-6950-447a-ac2c-7407cfe03626
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_payment_methods_batch:
+            id: 9ad1cfef-a9a3-4567-871c-8fd82d79776a
+            partitioner:
+        table_name: dim_payment_methods
+        schema_name: gold
+      gold_dim_products:
+        type: table
+        id: 096230cd-07e3-4ff3-9d2d-d8a75e44a1d7
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_products_batch:
+            id: e8049aeb-733d-4639-bfee-3694ad8d346c
+            partitioner:
+        table_name: dim_products
+        schema_name: gold
+      gold_dim_stores:
+        type: table
+        id: 4433a7fd-5235-4f13-a20c-5cf0a8388373
+        batch_metadata: {}
+        batch_definitions:
+          gold_dim_stores_batch:
+            id: 8338e4b2-4a14-4419-b650-3458faecc2bc
+            partitioner:
+        table_name: dim_stores
+        schema_name: gold
+      gold_fact_order_items:
+        type: table
+        id: f85c7445-5007-4a6d-9f12-2340952792ed
+        batch_metadata: {}
+        batch_definitions:
+          gold_fact_order_items_batch:
+            id: 7324124c-31a1-4e81-8143-81f0629c4de0
+            partitioner:
+        table_name: fact_order_items
+        schema_name: gold
+    connection_string: 
+      postgresql+psycopg2://postgres:admin@localhost:5432/walmart_db
+analytics_enabled:
+data_context_id: f8c71746-3977-4066-9511-26b217d8fbb5

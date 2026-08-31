@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "id": "2c04389b-0c33-43f1-8350-48787e2cfa27",
+      "kwargs": {
+        "column": "category_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c4456a33-d915-436a-8e47-3f5459acddfd",
+      "kwargs": {
+        "column": "category_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "8f829763-2f8a-488f-839d-b55c96218ed9",
+      "kwargs": {
+        "column": "category_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5ececc0c-52ed-4b60-b0fd-ba1703c623b2",
+      "kwargs": {
+        "column": "category_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "2273b2d4-83f2-46d0-a5d3-42d6eae964fc",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "7031c33a-2ca0-4b32-8d8b-0a31c03f3d88",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_categories_suite",
+  "notes": null
+}

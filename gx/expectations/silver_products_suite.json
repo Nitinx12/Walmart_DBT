@@ -1,0 +1,83 @@
+{
+  "expectations": [
+    {
+      "id": "4f3e9918-aae9-4b67-beba-d946df94db72",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "89b74565-d7be-45a1-b476-0cb2f6daf37a",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "c35e461a-4c35-438b-bfb0-786864445aed",
+      "kwargs": {
+        "column": "product_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "98dc9f93-4bac-4967-82e0-368c8f1fe6c6",
+      "kwargs": {
+        "column": "brand_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "b6926bea-f170-4bdf-848d-d0be6029a11c",
+      "kwargs": {
+        "column": "category_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7d49201e-ec41-408b-b353-5605413fa6cf",
+      "kwargs": {
+        "column": "price",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "1e72aa1c-5cdf-4f7e-98fa-1ba97c11054c",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2fe8b37d-159a-4a1b-815a-3611b9d20007",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "71567de0-d22a-4986-afbb-08bc37403fb3",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_products_suite",
+  "notes": null
+}

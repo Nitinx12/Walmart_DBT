@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "id": "2205e315-ff46-43f7-8585-20b2337eb922",
+      "kwargs": {
+        "column": "order_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "db42bc80-cf7e-4c98-84c5-bfe7b33c0df0",
+      "kwargs": {
+        "column": "order_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "bf9fa8da-43b0-4881-a22f-b218f1187cce",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "15db0f3c-0caa-438c-af08-c04cf3021f23",
+      "kwargs": {
+        "column": "store_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "edb084f4-47d0-462a-8ee0-16eee4011dec",
+      "kwargs": {
+        "column": "order_status"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "b1f59ab0-0e34-4ee3-a449-c630fec83653",
+      "kwargs": {
+        "column": "payment_method_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "e67ec5ca-dacf-4754-9578-e32ff5d87e5c",
+      "kwargs": {
+        "column": "total_amount",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "df2b8b60-5021-402c-ace9-04728739eb64",
+      "kwargs": {
+        "column": "order_timestamp"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "9d515e77-0738-4d6a-a40a-6b37c55371d6",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5d635dcb-fc66-4dfe-aaa2-6eeafd2741ef",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "e80fe1cc-92a4-44a3-a0b6-66aecdd68b2b",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_orders_suite",
+  "notes": null
+}

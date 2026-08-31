@@ -1,0 +1,83 @@
+{
+  "expectations": [
+    {
+      "id": "44dcc728-4a75-4c12-b1c9-bb84e31d632b",
+      "kwargs": {
+        "column": "employee_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "fbfc67ad-494e-4759-9147-79bcd240aac4",
+      "kwargs": {
+        "column": "employee_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "82de5263-3131-40d4-9993-cfa9f3e67c52",
+      "kwargs": {
+        "column": "store_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "cef78257-642e-4018-a454-74ee9889b31d",
+      "kwargs": {
+        "column": "employee_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d2d3f2c4-56e8-4b4c-b3ad-3cb541e5ca68",
+      "kwargs": {
+        "column": "job_title"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d4b96e5b-644d-440a-b554-22cff2649575",
+      "kwargs": {
+        "column": "salary",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "74a8227e-7b3a-493f-a0f9-5cd3c17fe891",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7caf1b9d-b51b-4a60-b22c-2cac2b86a434",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "76254d80-6640-4e99-978b-7dd6027a7133",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_employees_suite",
+  "notes": null
+}

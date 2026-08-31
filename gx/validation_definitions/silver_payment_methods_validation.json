@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "b4342b42-1d73-499f-bc0e-ce11dde4b09a",
+      "name": "silver_payment_methods"
+    },
+    "batch_definition": {
+      "id": "7805722b-1e47-487d-9938-d297d1d283be",
+      "name": "silver_payment_methods_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "2ad4c6f6-6e69-4c96-9a10-f245b4d7d894",
+  "name": "silver_payment_methods_validation",
+  "suite": {
+    "id": "3b18d3dc-cb8a-4159-bb5b-890cf37c5fc2",
+    "name": "silver_payment_methods_suite"
+  }
+}

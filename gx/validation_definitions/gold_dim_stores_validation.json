@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "4433a7fd-5235-4f13-a20c-5cf0a8388373",
+      "name": "gold_dim_stores"
+    },
+    "batch_definition": {
+      "id": "8338e4b2-4a14-4419-b650-3458faecc2bc",
+      "name": "gold_dim_stores_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "dcec12bf-5ad5-4694-a8d7-96e591e21472",
+  "name": "gold_dim_stores_validation",
+  "suite": {
+    "id": "ddfe0593-9536-41a8-850d-a577df8fa0be",
+    "name": "gold_dim_stores_suite"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "expectations": [
+    {
+      "id": "513c5b7c-eae1-45aa-b6a7-55e0131f53f3",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2e88fbbb-83f0-4918-8e92-421b33d875d2",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "7b246c28-16e5-4988-ac0e-26f57c2a153f",
+      "kwargs": {
+        "column": "customer_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "381b8fa9-8515-4067-a0a8-bc6fb4d044d4",
+      "kwargs": {
+        "column": "email"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "b8057c43-8b0b-4a24-b459-14b95dee5236",
+      "kwargs": {
+        "column": "email",
+        "regex": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_match_regex"
+    },
+    {
+      "id": "4e792ab0-25f4-40cf-b03a-81a75c4ea375",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "aff7b769-9dea-421c-ac43-2545fa7e7bdc",
+      "kwargs": {
+        "column": "country"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2cebeffa-1a0d-46d6-ac21-8f7147da239f",
+      "kwargs": {
+        "column": "created_timestamp"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2add8c60-b382-445b-930b-e2e62f16c4ae",
+      "kwargs": {
+        "column": "gold_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "52b60845-7943-42a5-ae8a-8c7cd032cac9",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "gold_dim_customers_suite",
+  "notes": null
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "6961a1bb-6950-447a-ac2c-7407cfe03626",
+      "name": "gold_dim_payment_methods"
+    },
+    "batch_definition": {
+      "id": "9ad1cfef-a9a3-4567-871c-8fd82d79776a",
+      "name": "gold_dim_payment_methods_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "80b382db-9df4-4338-ba31-b43bf71d638f",
+  "name": "gold_dim_payment_methods_validation",
+  "suite": {
+    "id": "fa1656e5-b88b-4bb9-8f1d-4aac42ef51cc",
+    "name": "gold_dim_payment_methods_suite"
+  }
+}

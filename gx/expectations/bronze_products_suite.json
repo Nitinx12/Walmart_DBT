@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "id": "37804a2b-4a1f-4581-9598-755a57c51458",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "02251f72-9732-4c04-b421-8101109fc37f",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "ce2798b8-57dc-401e-a561-007416d8f194",
+      "kwargs": {
+        "column": "product_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "949cad94-eac1-4063-8a91-1e1a7d10978e",
+      "kwargs": {
+        "column": "price",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "5700b727-d628-4ed9-bac9-a48a3e04d68a",
+      "kwargs": {
+        "column": "category"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "e78d7891-8f69-4e17-b591-b8d4064eef22",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "bronze_products_suite",
+  "notes": null
+}

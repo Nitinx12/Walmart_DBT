@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "id": "89351a93-74bc-4ee1-9d3f-63c9db6673e7",
+      "kwargs": {
+        "column": "store_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "e83c443b-d435-437c-9940-432535ef23a9",
+      "kwargs": {
+        "column": "store_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "34add938-2055-4877-b1e7-c9cb1bac75d2",
+      "kwargs": {
+        "column": "store_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "ff9662ef-1cbd-4c0e-8b9c-526e2d3c1f2c",
+      "kwargs": {
+        "column": "city"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "cf033c45-8e9f-478b-9eb0-8e72032c6d96",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "ce833db8-8234-458b-ad41-0ff9f120f8de",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "6accbc42-f818-4731-bd1e-d7364dbe3d13",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_stores_suite",
+  "notes": null
+}

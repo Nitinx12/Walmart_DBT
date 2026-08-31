@@ -1,0 +1,44 @@
+{
+  "actions": [],
+  "id": "8de88664-9d8e-4d2d-bd74-9a4e48db6743",
+  "name": "silver_checkpoint",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "90a341d7-c962-4d68-a234-dd004254aa1c",
+      "name": "silver_brands_validation"
+    },
+    {
+      "id": "3d682ec6-ca9d-46e9-8ef2-ac172e026a28",
+      "name": "silver_categories_validation"
+    },
+    {
+      "id": "2ad4c6f6-6e69-4c96-9a10-f245b4d7d894",
+      "name": "silver_payment_methods_validation"
+    },
+    {
+      "id": "9b4cd52f-839f-4549-bbfe-c22061e00ecf",
+      "name": "silver_customers_validation"
+    },
+    {
+      "id": "6695decf-3f30-4b74-82a7-028f5e542fa0",
+      "name": "silver_employees_validation"
+    },
+    {
+      "id": "8e67f778-378e-4e2a-bc33-5f0cebeccdfb",
+      "name": "silver_orders_validation"
+    },
+    {
+      "id": "f1e45a0b-b976-4616-9e33-b235a09dd7f0",
+      "name": "silver_order_items_validation"
+    },
+    {
+      "id": "27dda1c6-9fa8-436e-a87f-7893eb871a5a",
+      "name": "silver_products_validation"
+    },
+    {
+      "id": "487c71ae-f81d-4a65-8a0c-ddc0967800f3",
+      "name": "silver_stores_validation"
+    }
+  ]
+}

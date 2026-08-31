@@ -1,0 +1,94 @@
+{
+  "expectations": [
+    {
+      "id": "0391e5ac-71ea-4dd9-8640-e6e5f0a19fc8",
+      "kwargs": {
+        "column": "order_item_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c82ea51b-33f1-4a3c-83d0-333f4bed04c5",
+      "kwargs": {
+        "column": "order_item_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "4ff0d679-d22d-42e4-afd1-cc34e6bc7efd",
+      "kwargs": {
+        "column": "order_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "6bf0f11c-ced1-422e-89fa-bd7fc9ef6b18",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d0523aad-36c7-4bc9-8227-183e268fc63a",
+      "kwargs": {
+        "column": "quantity",
+        "min_value": 1.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "0cc6276b-6f0f-407c-8f74-d435873e8702",
+      "kwargs": {
+        "column": "unit_price",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "f00556a8-492e-469e-acdc-3905fd63c601",
+      "kwargs": {
+        "column": "line_amount",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "61efd82a-5462-4ec1-a87d-5cb24b6ed59f",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7e48c297-56ca-454e-ba97-fb8455d9f34f",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "c3078f98-c720-4940-870c-acd647064a6e",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_order_items_suite",
+  "notes": null
+}

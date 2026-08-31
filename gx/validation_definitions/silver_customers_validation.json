@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "e53d8dfc-5666-4176-9edb-16e8c29f5451",
+      "name": "silver_customers"
+    },
+    "batch_definition": {
+      "id": "845a1fdd-8d34-4e2e-83b6-ba7a748940b8",
+      "name": "silver_customers_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "9b4cd52f-839f-4549-bbfe-c22061e00ecf",
+  "name": "silver_customers_validation",
+  "suite": {
+    "id": "9f3d3d68-1030-467a-ad34-067ebbfaa675",
+    "name": "silver_customers_suite"
+  }
+}

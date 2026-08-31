@@ -1,0 +1,40 @@
+{
+  "actions": [],
+  "id": "639a3ffb-8cb7-463a-a095-f9d3a35c7e16",
+  "name": "gold_checkpoint",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "da8252ef-0619-4732-bf89-92334baea0b4",
+      "name": "gold_dim_brands_validation"
+    },
+    {
+      "id": "8a51dac7-4f9f-406d-b00f-b64cdd430321",
+      "name": "gold_dim_categories_validation"
+    },
+    {
+      "id": "80b382db-9df4-4338-ba31-b43bf71d638f",
+      "name": "gold_dim_payment_methods_validation"
+    },
+    {
+      "id": "3b0f7343-c3f4-473e-8199-efdfe1aaa986",
+      "name": "gold_dim_customers_validation"
+    },
+    {
+      "id": "dcec12bf-5ad5-4694-a8d7-96e591e21472",
+      "name": "gold_dim_stores_validation"
+    },
+    {
+      "id": "6cba2888-9210-4957-9474-aaafe23074b0",
+      "name": "gold_dim_products_validation"
+    },
+    {
+      "id": "a77b8f4f-acd6-4ec3-862e-d665ba08cd8b",
+      "name": "gold_dim_orders_validation"
+    },
+    {
+      "id": "be921b42-05ec-41a7-a8ca-b4065ec029b2",
+      "name": "gold_fact_order_items_validation"
+    }
+  ]
+}

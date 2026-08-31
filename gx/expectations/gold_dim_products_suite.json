@@ -1,0 +1,83 @@
+{
+  "expectations": [
+    {
+      "id": "9166755a-d298-4fb2-a482-231b5da9fc36",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "a2b05c66-f9e8-475d-9064-3fed056b62b5",
+      "kwargs": {
+        "column": "product_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "ef1669a0-daf6-4930-8ca1-3d803c6b4670",
+      "kwargs": {
+        "column": "product_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "0b3d2bc1-34b4-4624-a2c6-e3d5ad956e76",
+      "kwargs": {
+        "column": "brand_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "069819b1-5c34-4d55-ae57-d7ce5d033312",
+      "kwargs": {
+        "column": "category_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "aa684e87-bb76-4714-b805-f6237ec7f1b0",
+      "kwargs": {
+        "column": "price",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "70947219-1abb-46e4-b9bf-a95dff2df36c",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "e605f597-0953-47cc-b52b-26296744e68c",
+      "kwargs": {
+        "column": "gold_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "cdb46660-6fc5-4d90-8112-a3780e17f2af",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "gold_dim_products_suite",
+  "notes": null
+}

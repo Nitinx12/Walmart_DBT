@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "id": "ac65412b-4945-401f-aedb-a41d17327ee0",
+      "kwargs": {
+        "column": "brand_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dcdab3c0-1104-46a5-9a1e-cc8aa69c96af",
+      "kwargs": {
+        "column": "brand_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "5ffdce1a-710d-4545-8736-ca9231453a39",
+      "kwargs": {
+        "column": "brand_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "760dd8cd-5177-4b61-a4a0-dc1dccb6bd0e",
+      "kwargs": {
+        "column": "brand_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "8385a2b3-dc74-432a-b953-29e4deccabfd",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "0aea1597-34d0-42e1-9971-e22707014eba",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_brands_suite",
+  "notes": null
+}

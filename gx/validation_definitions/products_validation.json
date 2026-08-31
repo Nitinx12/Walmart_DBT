@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "28a8ca55-0c35-4bc9-840e-91f139ade23a",
+      "name": "bronze_products"
+    },
+    "batch_definition": {
+      "id": "500b99ba-0c07-476d-a450-b8cc899f905c",
+      "name": "products_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "fd2dabfc-762b-4521-9ca9-9feba82b002f",
+  "name": "products_validation",
+  "suite": {
+    "id": "e78d7891-8f69-4e17-b591-b8d4064eef22",
+    "name": "bronze_products_suite"
+  }
+}

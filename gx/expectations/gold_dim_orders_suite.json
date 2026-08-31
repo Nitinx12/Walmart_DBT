@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "id": "4514fef3-9411-434e-b560-125c005d862c",
+      "kwargs": {
+        "column": "order_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "36e55ba2-ae59-4c9e-b062-9d4b46670491",
+      "kwargs": {
+        "column": "order_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "b50f25ae-1a34-4b2c-a4b7-fb57ca9df48d",
+      "kwargs": {
+        "column": "store_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dbe9fda7-7914-4657-8a44-98a1da5200d5",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "4aaa29b9-85b0-45dc-8f62-9e9d8807af90",
+      "kwargs": {
+        "column": "payment_method_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5615dc8d-e3ae-4e2c-b8c8-89c818beb5cc",
+      "kwargs": {
+        "column": "order_status"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8a2a15aa-bae8-427a-b978-809af6184456",
+      "kwargs": {
+        "column": "total_amount",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "fbb5d334-fa68-4220-8511-0b8eb0fcbddc",
+      "kwargs": {
+        "column": "order_timestamp"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7d5a0069-7eb7-4527-b612-a1be971cd596",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "e4f01a12-1681-46cd-ba96-4bb97c76a849",
+      "kwargs": {
+        "column": "gold_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "6edd0f67-3d6f-4965-9c4a-a3cf012da909",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "gold_dim_orders_suite",
+  "notes": null
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "26fd1bb3-57d5-41be-a160-2bd9a6c661cf",
+      "name": "gold_dim_categories"
+    },
+    "batch_definition": {
+      "id": "b0556da4-b13f-43e0-be43-bbd6d9380571",
+      "name": "gold_dim_categories_batch"
+    },
+    "datasource": {
+      "id": "73f07a02-8deb-4ab1-96f7-dccadc00e32e",
+      "name": "walmart_postgres"
+    }
+  },
+  "id": "8a51dac7-4f9f-406d-b00f-b64cdd430321",
+  "name": "gold_dim_categories_validation",
+  "suite": {
+    "id": "3447e4be-e5a3-4d05-b6d5-dd4d96bf473c",
+    "name": "gold_dim_categories_suite"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "id": "99486b57-6a74-4b11-b86e-5e7a26ae5972",
+      "kwargs": {
+        "column": "payment_method_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d4bfa939-8c24-4440-8638-58a4a243fcc1",
+      "kwargs": {
+        "column": "payment_method_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "f8516ad2-d1c4-427a-be90-25fd8655be4c",
+      "kwargs": {
+        "column": "payment_method_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2222a6c6-e477-4529-bc71-6c53e841c4a6",
+      "kwargs": {
+        "column": "payment_method_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "b09006c3-9465-4797-b27a-bd0ace4430ff",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "3b18d3dc-cb8a-4159-bb5b-890cf37c5fc2",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_payment_methods_suite",
+  "notes": null
+}

@@ -1,0 +1,83 @@
+{
+  "expectations": [
+    {
+      "id": "775d4a1f-6f10-4f73-b1cb-289f60b582ac",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "36d6a764-631f-4b40-b061-0c2cfd057505",
+      "kwargs": {
+        "column": "customer_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "e3b7387a-c2d5-4891-9e76-e1e80478f75a",
+      "kwargs": {
+        "column": "customer_name"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "9d9faf27-d3bf-4a34-a45d-be5d5d001f42",
+      "kwargs": {
+        "column": "email"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "b6c08b4b-1d42-4be4-9168-904465271e2a",
+      "kwargs": {
+        "column": "email",
+        "regex": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_match_regex"
+    },
+    {
+      "id": "04670bcd-7553-4f3a-bccd-fb712c9020c7",
+      "kwargs": {
+        "column": "is_active"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8129e7a5-c28f-4e70-8aab-40e6c2d598aa",
+      "kwargs": {
+        "column": "created_timestamp"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "fa6548ba-bf2c-4a2f-88f3-33efbf00a418",
+      "kwargs": {
+        "column": "silver_loaded_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "9f3d3d68-1030-467a-ad34-067ebbfaa675",
+  "meta": {
+    "great_expectations_version": "1.21.0"
+  },
+  "name": "silver_customers_suite",
+  "notes": null
+}
