@@ -20,6 +20,7 @@ import logging
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import engine as config
@@ -62,9 +63,26 @@ def get_postgres_engine():
             f"Opening Postgres connection to "
             f"{config.POSTGRES_HOST}:{config.POSTGRES_PORT}/{config.POSTGRES_DATABASE}"
         )
-        url = (
-            f"postgresql+psycopg2://{config.POSTGRES_USERNAME}:{config.POSTGRES_PASSWORD}"
-            f"@{config.POSTGRES_HOST}:{config.POSTGRES_PORT}/{config.POSTGRES_DATABASE}"
+        # Built with URL.create (not an f-string) so a password containing
+        # @, :, or / doesn't corrupt the URL, and so optional sslmode /
+        # channel_binding params (needed by managed providers like Neon)
+        # can be added without breaking plain local Postgres.
+        query = {
+            k: v
+            for k, v in {
+                "sslmode": getattr(config, "POSTGRES_SSLMODE", None),
+                "channel_binding": getattr(config, "POSTGRES_CHANNEL_BINDING", None),
+            }.items()
+            if v
+        }
+        url = URL.create(
+            "postgresql+psycopg2",
+            username=config.POSTGRES_USERNAME,
+            password=config.POSTGRES_PASSWORD,
+            host=config.POSTGRES_HOST,
+            port=config.POSTGRES_PORT,
+            database=config.POSTGRES_DATABASE,
+            query=query,
         )
         try:
             _postgres_engine = create_engine(url)
