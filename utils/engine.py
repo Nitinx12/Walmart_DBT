@@ -14,6 +14,10 @@ POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE")
 POSTGRES_USERNAME = os.getenv("POSTGRES_USERNAME")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+# Optional: required by managed providers like Neon, unset/None for plain
+# local Postgres so this never breaks the Docker dev setup.
+POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE")
+POSTGRES_CHANNEL_BINDING = os.getenv("POSTGRES_CHANNEL_BINDING")
 
 # Cast port to int now, fail loudly later if it's garbage instead of silently
 # passing a string into a driver that expects int.
