@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "661b57a5-3590-463a-b1f2-63648aff53e1",
+      "id": "398efba4-6fee-4a39-962c-1c9c6973df59",
       "kwargs": {
         "column": "customer_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "1e85a200-8d37-4d4c-91d5-9f2598970ac0",
+      "id": "e2dbf6d4-0bc8-4668-8f60-42d08c221349",
       "kwargs": {
         "column": "customer_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "de1f66d2-e50e-45f1-8179-6e54afeb8d91",
+      "id": "aa1d12d0-b801-4514-a386-245c93b945b3",
       "kwargs": {
         "column": "email"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "d8ca34cb-b2de-497c-8f75-7a9438811b96",
+      "id": "f790ba99-4ffe-4de2-895f-076577179fc8",
       "kwargs": {
         "column": "first_name"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "a63368bf-fa64-46f8-aea3-9d4ab7126fa0",
+      "id": "83eb39ba-6b0b-492b-830c-a5961ea90693",
       "kwargs": {
         "column": "last_name"
       },
@@ -46,7 +46,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "8b2de98a-2c32-4207-a443-d3aba9cd10eb",
+      "id": "b489e56f-8691-49ee-92d2-a4c12e029e1a",
       "kwargs": {
         "column": "is_active",
         "value_set": [
@@ -59,7 +59,7 @@
       "type": "expect_column_values_to_be_in_set"
     },
     {
-      "id": "45d5b328-2d2b-4268-b436-b57aa26bf100",
+      "id": "5c0face9-b430-4f12-b368-a858d9831959",
       "kwargs": {
         "column": "created_timestamp"
       },

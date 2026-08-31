@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "6af96a1b-d233-4952-8a77-da5388de37e2",
+      "id": "2934ce48-b5a5-406b-9cd5-2a2426de8f5d",
       "kwargs": {
         "column": "product_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "15e39db7-c143-4a3b-9d8d-ff6b3e657b47",
+      "id": "9eaf8b82-cf8a-484c-9850-ab4089141e06",
       "kwargs": {
         "column": "product_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "0758ac30-d08a-41a6-a08d-028364ab9d0b",
+      "id": "b44ae9a1-ac67-482f-886b-34238b816b62",
       "kwargs": {
         "column": "product_name"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "aa0ae8cd-af6f-4ffd-9f44-2fb6be9f422f",
+      "id": "e276891e-9a95-4ec1-8fb1-2f58b1de2806",
       "kwargs": {
         "column": "price",
         "min_value": 0.0
@@ -38,7 +38,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "af73edca-becc-4126-86fc-c4a40a81463c",
+      "id": "636ae7b6-70c3-4897-88cc-83451f2d8c4b",
       "kwargs": {
         "column": "category"
       },
