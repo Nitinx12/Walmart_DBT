@@ -19,7 +19,7 @@ The compose stack (`docker/docker-compose.yaml`) runs Airflow's
 CeleryExecutor setup rather than the simpler LocalExecutor — task
 execution is handed off through a Redis-backed queue to a dedicated
 `airflow-worker` container, separate from the scheduler and API server.
-For a 9-task linear DAG this is more infrastructure than strictly
+For a 10-task linear DAG this is more infrastructure than strictly
 necessary, but it's what the official Airflow 3.3.0 quick-start
 provisions, and it's what this project's `docker-compose.yaml` was
 adapted from.
@@ -96,15 +96,16 @@ flowchart TD
     G["dbt_gold_run<br/>dbt run --select gold"]:::gold
     H["dbt_gold_test<br/>dbt test --select gold"]:::gold
     I["gold_sql_tests<br/>tests/gold/*.sql"]:::gold
+    J["great_expectations_tests<br/>Bronze · Silver · Gold"]:::gold
 
-    A --> B --> C --> D --> E --> F --> G --> H --> I
+    A --> B --> C --> D --> E --> F --> G --> H --> I --> J
 ```
 
 **Task-by-task:**
 
 | # | task_id | Command | Layer |
 |---|---|---|---|
-| 0 | `preflight` | checks installed `pyspark` version, pins to `3.5.5` if missing/wrong (mongo-spark-connector requires `3.5.x`) | — |
+| 0 | `preflight` | checks installed `pyspark` version and fails with a `uv sync` recovery instruction unless it is `3.5.x` | — |
 | 1 | `extract` | `uv run python scripts/extract.py` | Bronze |
 | 2 | `bronze_sql_tests` | `uv run python scripts/sql_test.py tests/bronze` | Bronze |
 | 3 | `dbt_silver_run` | `cd walmart_dbt && uv run dbt run --select silver` | Silver |
@@ -113,6 +114,7 @@ flowchart TD
 | 6 | `dbt_gold_run` | `cd walmart_dbt && uv run dbt run --select gold` | Gold |
 | 7 | `dbt_gold_test` | `cd walmart_dbt && uv run dbt test --select gold` | Gold |
 | 8 | `gold_sql_tests` | `uv run python scripts/sql_test.py tests/gold` | Gold |
+| 9 | `great_expectations_tests` | `uv run python -m pipeline.data_quality.run --layer all` | All layers |
 
 Every task is a `@task.bash` — the DAG builds each one's shell command as
 a Python string, prefixed with a shared `_PREAMBLE` (next section), rather
@@ -225,7 +227,7 @@ docker compose up -d
 ```
 
 **In the UI** (`http://localhost:8080`, login `airflow` / `airflow`):
-1. Confirm `walmart_medallion_pipeline` is listed with all 9 tasks
+1. Confirm `walmart_medallion_pipeline` is listed with all 10 tasks
 2. Unpause it (DAGs start paused — `AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'`)
 3. Trigger manually
 4. Watch the Grid view — each task box colors in as it runs

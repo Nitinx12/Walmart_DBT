@@ -4,18 +4,11 @@
 
 # `pipeline/run_pipeline.ps1` — Local Windows Entry Point
 
-The manual, no-Docker way to run the full medallion pipeline: seven
-stages, stop on first failure, clean terminal output with full detail
-still captured in `logs/` via `utils/logger.py`. This is the script
+The manual, no-Docker way to run the full medallion pipeline: a master runner
+that executes eight stages in strict order, stops on the first failure, and
+captures detail in `logs/` via `utils/logger.py`. This is the script
 `airflow/dags/walmart_pipeline_dag.py` was deliberately built to mirror
 stage-for-stage — see §6 for the direct comparison.
-
-> **Location note:** the script's own header comment says it lives in a
-> `ps1/` folder; the actual project layout has it under `pipeline/`
-> (`walmart/pipeline/run_pipeline.ps1`). Doesn't affect anything
-> functionally — `$ProjectRoot = Split-Path -Parent $PSScriptRoot` just
-> walks up one level from wherever the script actually sits — but the
-> comment itself is stale.
 
 ---
 
@@ -87,7 +80,7 @@ this one project's own `.env` format, not be a general-purpose parser.
 
 ---
 
-## 3. The seven stages
+## 3. The eight stages
 
 ```mermaid
 flowchart TD
@@ -103,19 +96,21 @@ flowchart TD
     S4["Stage 4: Silver SQL tests<br/>tests/silver/*.sql"]:::silver
     S5["Stage 5: dbt gold<br/>run + test --select gold"]:::gold
     S6["Stage 6: Gold SQL tests<br/>tests/gold/*.sql"]:::gold
+    S7["Stage 7: Great Expectations<br/>Bronze + Silver + Gold"]:::gold
 
-    S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
 ```
 
 | Stage | What runs | Working directory |
 |---|---|---|
-| 0. Preflight | `uv run python -c "import pyspark; print(pyspark.__version__)"`; if missing or not `3.5.x`, `uv add pyspark==3.5.5` | project root |
+| 0. Preflight | `uv run python -c "import pyspark; print(pyspark.__version__)"`; fails with a `uv sync` recovery instruction unless PySpark is `3.5.x` | project root |
 | 1. Extract | `uv run python scripts/extract.py` | project root |
 | 2. Bronze SQL tests | `uv run python scripts/sql_test.py tests/bronze` | project root |
 | 3. Silver dbt | `uv run dbt run --select silver` then (if that succeeded) `uv run dbt test --select silver` | `walmart_dbt/` — script `Set-Location`s in, then back out |
 | 4. Silver SQL tests | `uv run python scripts/sql_test.py tests/silver` | project root |
 | 5. Gold dbt | `uv run dbt run --select gold` then `uv run dbt test --select gold` | `walmart_dbt/` |
 | 6. Gold SQL tests | `uv run python scripts/sql_test.py tests/gold` | project root |
+| 7. Great Expectations | `uv run python -m pipeline.data_quality.run --layer all` | project root |
 
 The two dbt stages are the only ones that change directory — `dbt`
 expects to run from inside a directory containing `dbt_project.yml`, so
@@ -207,13 +202,13 @@ terminal, exactly as documented in `utils.md` §4.
 ## 6. Side-by-side with the Airflow DAG
 
 Both this script and `walmart_medallion_pipeline` (`airflow.md`) exist to
-run the exact same seven-stage pipeline — one for local, interactive,
+run the exact same eight-stage pipeline — one for local, interactive,
 Windows-native runs; the other for scheduled/containerized runs. They're
 kept in lockstep on purpose:
 
 | | `run_pipeline.ps1` | `walmart_medallion_pipeline` DAG |
 |---|---|---|
-| Stages | 7 (0–6) | 9 tasks (preflight splits are the same 7 logical stages — dbt run/test are separate Airflow tasks rather than one combined stage) |
+| Stages | 8 (0–7) | 10 tasks (dbt run/test are separate Airflow tasks; GX is the final task) |
 | Stop-on-failure | Manual: every stage checks `$LASTEXITCODE`, calls `Stop-Pipeline` | Automatic: Airflow's default `all_success` trigger rule |
 | Env loading | `Import-DotEnv` — custom line-by-line parser, `.env` at project root | `source .env` inside each task's shell, plus explicit overrides for container-only values (`airflow.md` §5) |
 | `PYTHONPATH` | `$env:PYTHONPATH = $ProjectRoot` | `export PYTHONPATH=/app` (same idea, container path) |
@@ -247,5 +242,5 @@ or PowerShell verifies for you.
 ```
 
 Exit code `0` on full success (falls through to `Write-Summary` after
-Stage 6); exit code `1` the moment any stage fails, with the summary
+Stage 7); exit code `1` the moment any stage fails, with the summary
 table showing exactly which stages passed before the failure.

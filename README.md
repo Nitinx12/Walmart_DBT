@@ -47,9 +47,8 @@ Every arrow into silver and gold is a **quality gate**, not a formality the next
 
 ## Orchestration — one pipeline, run three ways
 
-The same 7 stages run locally via PowerShell or on a schedule in Airflow. The
-standalone Docker image currently packages the project and validates Postgres
-startup, but `main.py` is a scaffold and does not yet run the ETL stages:
+The same eight stages run locally via PowerShell, on a schedule in Airflow, or
+through the standalone Docker runner:
 
 ```mermaid
 flowchart TD
@@ -59,6 +58,7 @@ flowchart TD
     S3 --> S4["4 · Silver SQL tests"]
     S4 --> S5["5 · dbt run + test — gold"]
     S5 --> S6["6 · Gold SQL tests"]
+    S6 --> S7["7 · Great Expectations<br/>Bronze · Silver · Gold"]
 
     classDef stage fill:#1a2a3a,color:#fff,stroke:#4a90d9
     class S0,S1,S2,S3,S4,S5,S6 stage
@@ -72,8 +72,8 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 |---|---|
 | **Incremental extraction** | Watermark-based `$gt` pushdown from Mongo, real `MERGE`-style upserts, automatic fallback when no watermark or unique index exists |
 | **Modeling** | 17 dbt models (9 silver + 8 gold), 100+ tests, SCD Type 2 snapshots |
-| **Data quality** | dbt-native tests, standalone schema-driven SQL checks, and on-demand Great Expectations suites across Bronze, Silver, and Gold |
-| **Runners** | Windows/PowerShell and Airflow DAG execute the seven stages; the standalone Docker image is a buildable scaffold |
+| **Data quality** | dbt-native tests, standalone schema-driven SQL checks, and a final Great Expectations gate across Bronze, Silver, and Gold |
+| **Runners** | Windows/PowerShell, Airflow, and the standalone runner execute the same eight stages |
 | **Containerization** | Docker Compose stack (CeleryExecutor: scheduler, workers, triggerer, Redis) plus a self-contained pipeline image |
 | **Dashboard** | Streamlit + Plotly dashboard querying the gold schema directly — [live demo](https://your-app-name.streamlit.app), source in [`dashboard/`](dashboard/) |
 | **CI/CD** | Lint, DAG-integrity checks, and a live bronze→silver→gold run against Postgres on every PR; images published to GHCR on merge — [`docs/ci_cd.md`](docs/CI_CD.md) |
@@ -88,10 +88,10 @@ In Airflow this is `walmart_medallion_pipeline`, with `all_success` trigger rule
 # Local, Windows
 ./pipeline/run_pipeline.ps1
 
-# On-demand Great Expectations checks for every warehouse layer
+# Run Great Expectations checks alone when needed
 uv run python -m pipeline.data_quality.run --layer all
 
-# Standalone container scaffold (does not run ETL stages yet)
+# Standalone container runner (supply container-correct database hosts)
 docker run --env-file .env walmart-pipeline
 
 # Full Airflow stack

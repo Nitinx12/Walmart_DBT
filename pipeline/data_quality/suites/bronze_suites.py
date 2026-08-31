@@ -14,9 +14,9 @@ Notes on the schema as provided:
   - `created_timestamp` / `updated_timestamp` are stored as `text`, not a
     native timestamp type — validated as not-null only; add a regex/format
     expectation once you confirm the exact string format coming out of Mongo.
-  - `is_active` is `text`, not boolean. Assumed to hold "true"/"false" —
-    ADJUST the `expect_column_values_to_be_in_set` call for that column in
-    each suite if your source actually uses different values (e.g. "1"/"0").
+  - `is_active` is `text`, not boolean, and uses the source system's `Y`/`N`
+    flags. The expectations below preserve that representation in Bronze;
+    Silver and Gold convert it to native booleans.
 
 NOTE on the import below: `from pipeline.data_quality.context import ...`
 only resolves if `pipeline` is importable as a top-level package, which
@@ -84,7 +84,7 @@ def customers_validation() -> gx.ValidationDefinition:
             gx.expectations.ExpectColumnValuesToNotBeNull(column="first_name"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="last_name"),
             gx.expectations.ExpectColumnValuesToBeInSet(
-                column="is_active", value_set=["true", "false"]
+                column="is_active", value_set=["Y", "N"]
             ),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="created_timestamp"),
         ],
@@ -102,7 +102,7 @@ def employees_validation() -> gx.ValidationDefinition:
             gx.expectations.ExpectColumnValuesToBeBetween(column="salary", min_value=0),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="job_title"),
             gx.expectations.ExpectColumnValuesToBeInSet(
-                column="is_active", value_set=["true", "false"]
+                column="is_active", value_set=["Y", "N"]
             ),
         ],
     )
@@ -164,7 +164,7 @@ def stores_validation() -> gx.ValidationDefinition:
             gx.expectations.ExpectColumnValuesToNotBeNull(column="store_name"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="city"),
             gx.expectations.ExpectColumnValuesToBeInSet(
-                column="is_active", value_set=["true", "false"]
+                column="is_active", value_set=["Y", "N"]
             ),
         ],
     )

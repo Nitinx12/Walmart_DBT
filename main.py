@@ -12,6 +12,7 @@ Stage structure intentionally mirrors run_pipeline.ps1 exactly:
     4. Silver SQL tests (tests/silver/*.sql)
     5. dbt gold build + test (walmart_dbt, models/gold)      -- one stage
     6. Gold SQL tests (tests/gold/*.sql)
+    7. Great Expectations tests (Bronze, Silver, Gold)
 Stops immediately on the first failed stage.
 """
 
@@ -33,7 +34,7 @@ ENV_FILE = PROJECT_ROOT / ".env"
 REQUIRED_PYSPARK_PREFIX = "3.5"
 REQUIRED_PYSPARK_VERSION = "3.5.5"
 
-TOTAL_STEPS = 6  # matches run_pipeline.ps1's "STEP n / 6" numbering
+TOTAL_STEPS = 7  # matches run_pipeline.ps1's "STEP n / 7" numbering
 
 
 def in_container() -> bool:
@@ -86,7 +87,7 @@ def log_line(level: str, message: str) -> None:
 @dataclass
 class Stage:
     name: str               # short key used in the summary table (matches ps1)
-    header: str             # descriptive text shown in the "STEP n/6" banner
+    header: str             # descriptive text shown in the "STEP n/7" banner
     commands: list[list[str]]
     cwd: Path = PROJECT_ROOT
 
@@ -210,6 +211,11 @@ def main() -> int:
             "Gold Tests",
             "GOLD SQL TESTS (tests/gold)",
             [["uv", "run", "python", "scripts/sql_test.py", "tests/gold"]],
+        ),
+        Stage(
+            "Great Expectations",
+            "GREAT EXPECTATIONS TESTS (Bronze, Silver, Gold)",
+            [["uv", "run", "python", "-m", "pipeline.data_quality.run", "--layer", "all"]],
         ),
     ]
 

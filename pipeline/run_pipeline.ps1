@@ -1,276 +1,270 @@
 <#
 .SYNOPSIS
-    Runs the walmart medallion pipeline end-to-end, one stage at a time:
-        0. Preflight        (pyspark <-> mongo-spark-connector version check)
-        1. Extract          (scripts/extract.py)
-        2. Bronze SQL tests (tests/bronze/*.sql)
-        3. dbt silver build + test (walmart_dbt, models/silver)
-        4. Silver SQL tests (tests/silver/*.sql)
-        5. dbt gold build + test (walmart_dbt, models/gold)
-        6. Gold SQL tests (tests/gold/*.sql)
+    Master runner for the Walmart medallion pipeline.
 
-    Stops immediately on the first failed stage.
+.DESCRIPTION
+    Runs the fixed eight-stage pipeline in strict order and stops immediately
+    when any command fails:
+        0. Preflight
+        1. MongoDB to Bronze extraction
+        2. Bronze SQL tests
+        3. Silver dbt build and tests
+        4. Silver SQL tests
+        5. Gold dbt build and tests
+        6. Gold SQL tests
+        7. Great Expectations tests
 
-    Terminal stays clean: only a short header + PASS/FAIL line per stage.
-    Full detail (including failing rows, query output, tracebacks) goes to
-    the rotating log files under logs/, via utils/logger.py.
+    The script resolves the project root itself, loads .env for all child
+    commands, logs stage results, and returns 0 only after every stage passes.
 
-.NOTES
-    File location: this script lives in a `ps1/` folder directly under the
-    project root, e.g.:
-
-        walmart/
-        ├─ ps1/
-        │  └─ run_pipeline.ps1   <- this file
-        ├─ scripts/
-        ├─ tests/
-        ├─ walmart_dbt/
-        └─ .env
-
-    Requires:
-      - uv installed and on PATH
-      - `sqlalchemy` + `psycopg2-binary` available in the project env
-        (uv add sqlalchemy psycopg2-binary)
-      - dbt-postgres available in the project env if not already
-      - A `.env` file at project root with
-        POSTGRES_HOST / POSTGRES_PORT / POSTGRES_DATABASE / POSTGRES_USERNAME / POSTGRES_PASSWORD
-      - utils/__init__.py must exist at the project root so that
-        `from utils.logger import get_logger` resolves correctly
+.EXAMPLE
+    .\pipeline\run_pipeline.ps1
 #>
 
+[CmdletBinding()]
+param(
+    [switch]$NoClear
+)
+
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 
-# ---------------------------------------------------------------------------
-# Setup
-# ---------------------------------------------------------------------------
-# Clear only an interactive console; redirected runners have no cursor handle.
-if (-not [Console]::IsOutputRedirected) {
-    Clear-Host
-}
-
-# This script lives in a ps1/ subfolder one level below the actual project
-# root (where scripts/, tests/, walmart_dbt/, _env, etc. all live).
-$ProjectRoot = Split-Path -Parent $PSScriptRoot
-Set-Location $ProjectRoot
-
-# scripts/*.py are run as `python scripts/xxx.py`, not `python -m`, so Python
-# only puts scripts/ on sys.path by default -- utils/ at the project root
-# would be unimportable without this. Mirrors ENV PYTHONPATH=/app in the Dockerfile.
-$env:PYTHONPATH = $ProjectRoot
-# Rich report output includes Unicode symbols; avoid legacy Windows code pages.
-$env:PYTHONIOENCODING = "utf-8"
-
-$LogDir = Join-Path $ProjectRoot "logs"
-$LogFile = Join-Path $LogDir ("pipeline_" + (Get-Date -Format "yyyy-MM-dd") + ".log")
-$Divider = "-" * 60
-$StageResults = [ordered]@{}
+$script:ProjectRoot = Split-Path -Parent $PSScriptRoot
+$script:DbtProjectRoot = Join-Path $script:ProjectRoot "walmart_dbt"
+$script:LogDir = Join-Path $script:ProjectRoot "logs"
+$script:LogFile = Join-Path $script:LogDir ("pipeline_" + (Get-Date -Format "yyyy-MM-dd") + ".log")
+$script:Divider = "-" * 60
+$script:StageResults = [ordered]@{}
+$script:RequiredPysparkPrefix = "3.5"
+$script:TotalStages = 7
 
 function Write-PipelineLog {
     param(
         [ValidateSet("INFO", "WARNING", "ERROR", "DEBUG")]
         [string]$Level = "INFO",
+        [Parameter(Mandatory)]
         [string]$Message
     )
 
-    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "{0} | {1,-8} | pipeline | {2}" -f $timestamp, $Level, $Message
-    $line | Out-File -FilePath $LogFile -Append -Encoding utf8
+    try {
+        New-Item -ItemType Directory -Path $script:LogDir -Force | Out-Null
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        "{0} | {1,-8} | pipeline | {2}" -f $timestamp, $Level, $Message |
+            Out-File -FilePath $script:LogFile -Append -Encoding utf8
+    }
+    catch {
+        Write-Warning "Could not write pipeline log: $($_.Exception.Message)"
+    }
 }
 
 function Write-StageHeader {
-    param([string]$Title)
+    param([Parameter(Mandatory)][string]$Title)
+
     Write-Host ""
-    Write-Host $Divider -ForegroundColor DarkGray
+    Write-Host $script:Divider -ForegroundColor DarkGray
     Write-Host " $Title" -ForegroundColor Cyan
-    Write-Host $Divider -ForegroundColor DarkGray
-    Write-PipelineLog -Level "INFO" -Message $Title
+    Write-Host $script:Divider -ForegroundColor DarkGray
+    Write-PipelineLog -Message $Title
 }
 
 function Write-StagePass {
-    param([string]$Message)
+    param([Parameter(Mandatory)][string]$Message)
+
     Write-Host " [PASS] $Message" -ForegroundColor Green
-    Write-PipelineLog -Level "INFO" -Message "PASS - $Message"
+    Write-PipelineLog -Message "PASS - $Message"
 }
 
 function Write-StageFail {
-    param([string]$Message)
+    param([Parameter(Mandatory)][string]$Message)
+
     Write-Host " [FAIL] $Message" -ForegroundColor Red
     Write-PipelineLog -Level "ERROR" -Message "FAIL - $Message"
 }
 
 function Write-Summary {
     Write-Host ""
-    Write-Host $Divider -ForegroundColor DarkGray
+    Write-Host $script:Divider -ForegroundColor DarkGray
     Write-Host " PIPELINE SUMMARY" -ForegroundColor Cyan
-    Write-Host $Divider -ForegroundColor DarkGray
-    foreach ($key in $StageResults.Keys) {
-        $status = $StageResults[$key]
-        $color = if ($status -eq "PASS") { "Green" } elseif ($status -eq "FAIL") { "Red" } else { "Yellow" }
-        Write-Host (" {0,-20} {1}" -f $key, $status) -ForegroundColor $color
+    Write-Host $script:Divider -ForegroundColor DarkGray
+
+    foreach ($stageName in $script:StageResults.Keys) {
+        $status = $script:StageResults[$stageName]
+        $color = if ($status -eq "PASS") { "Green" } else { "Red" }
+        Write-Host (" {0,-20} {1}" -f $stageName, $status) -ForegroundColor $color
     }
-    Write-Host $Divider -ForegroundColor DarkGray
+
+    Write-Host $script:Divider -ForegroundColor DarkGray
 }
 
 function Stop-Pipeline {
-    param([string]$FailedStageKey)
-    $StageResults[$FailedStageKey] = "FAIL"
-    Write-PipelineLog -Level "ERROR" -Message "$FailedStageKey failed - stopping pipeline. See logs/ for detail."
-    Write-StageFail "$FailedStageKey failed - stopping pipeline. See logs/ for detail."
+    param(
+        [Parameter(Mandatory)][string]$FailedStage,
+        [Parameter(Mandatory)][System.Management.Automation.ErrorRecord]$ErrorRecord
+    )
+
+    $script:StageResults[$FailedStage] = "FAIL"
+    $reason = $ErrorRecord.Exception.Message
+    Write-PipelineLog -Level "ERROR" -Message "$FailedStage failed: $reason"
+    Write-StageFail "$FailedStage failed. Stopping pipeline. See logs/ for detail."
     Write-Summary
     exit 1
 }
 
-# Load env vars into the current process environment so child python/dbt calls see it
 function Import-DotEnv {
-    param([string]$Path = ".env")
-    if (-not (Test-Path $Path)) {
-        Write-Host "WARNING: $Path not found at project root." -ForegroundColor Yellow
+    param([string]$Path = (Join-Path $script:ProjectRoot ".env"))
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        Write-Warning ".env was not found; using environment variables already set in this shell."
         return
     }
-    Get-Content $Path | ForEach-Object {
-        $line = $_.Trim()
-        if ($line -and -not $line.StartsWith("#") -and $line.Contains("=")) {
-            $key, $value = $line -split "=", 2
-            [System.Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim())
+
+    foreach ($rawLine in Get-Content -LiteralPath $Path) {
+        $line = $rawLine.Trim()
+        if (-not $line -or $line.StartsWith("#") -or -not $line.Contains("=")) {
+            continue
         }
+
+        $key, $value = $line -split "=", 2
+        [Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim(), "Process")
     }
 }
 
-Import-DotEnv
-Write-PipelineLog -Level "INFO" -Message "Pipeline started from $ProjectRoot"
+function Assert-Prerequisites {
+    $requiredPaths = @(
+        "pyproject.toml",
+        "scripts/extract.py",
+        "scripts/sql_test.py",
+        "tests/bronze",
+        "tests/silver",
+        "tests/gold",
+        "walmart_dbt/dbt_project.yml"
+    )
 
-# The mongo-spark-connector jar in jars/ is pinned to 10.4.0, which only
-# supports Spark 3.x. If this pin ever changes (new connector jar), update
-# this version to match.
-$RequiredPysparkPrefix = "3.5"
-$RequiredPysparkVersion = "3.5.5"
+    foreach ($relativePath in $requiredPaths) {
+        $path = Join-Path $script:ProjectRoot $relativePath
+        if (-not (Test-Path -LiteralPath $path)) {
+            throw "Required pipeline path is missing: $relativePath"
+        }
+    }
 
-# ---------------------------------------------------------------------------
-# Stage 0: Preflight - pyspark / mongo-spark-connector version check
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 0 / 6  -  PREFLIGHT (dependency check)"
-
-$installedPyspark = ((uv run python -c "import pyspark; print(pyspark.__version__)" 2>$null) -join "").Trim()
-
-if ([string]::IsNullOrWhiteSpace($installedPyspark)) {
-    Write-Host " pyspark not found or failed to import - attempting to install $RequiredPysparkVersion..." -ForegroundColor Yellow
-    Write-PipelineLog -Level "WARNING" -Message "pyspark not found or failed to import; attempting install $RequiredPysparkVersion"
-    uv add "pyspark==$RequiredPysparkVersion"
-    if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Preflight" }
-}
-elseif ($installedPyspark -notlike "$RequiredPysparkPrefix*") {
-    Write-Host " pyspark $installedPyspark detected, but mongo-spark-connector needs $RequiredPysparkPrefix.x" -ForegroundColor Yellow
-    Write-Host " Pinning pyspark to $RequiredPysparkVersion ..." -ForegroundColor Yellow
-    Write-PipelineLog -Level "WARNING" -Message "pyspark $installedPyspark detected; pinning to $RequiredPysparkVersion"
-    uv add "pyspark==$RequiredPysparkVersion"
-    if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Preflight" }
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+        throw "uv is not available on PATH. Install uv, then run 'uv sync'."
+    }
 }
 
-$StageResults["Preflight"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "Preflight passed: pyspark version OK ($RequiredPysparkPrefix.x)"
-Write-StagePass "pyspark version OK ($RequiredPysparkPrefix.x)"
+function Invoke-PipelineCommand {
+    param(
+        [Parameter(Mandatory)][string]$Description,
+        [Parameter(Mandatory)][string[]]$Command,
+        [string]$WorkingDirectory = $script:ProjectRoot
+    )
 
-# ---------------------------------------------------------------------------
-# Stage 1: Extract
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 1 / 6  -  EXTRACT (scripts/extract.py)"
-Write-PipelineLog -Level "INFO" -Message "Running Extract stage"
+    Write-PipelineLog -Message "${Description}: $($Command -join ' ')"
+    Push-Location $WorkingDirectory
+    try {
+        $executable = $Command[0]
+        $arguments = if ($Command.Count -gt 1) { $Command[1..($Command.Count - 1)] } else { @() }
+        & $executable @arguments
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
 
-uv run python scripts/extract.py
-if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Extract" }
-$StageResults["Extract"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "Extract stage completed successfully"
-Write-StagePass "Extract completed"
-
-# ---------------------------------------------------------------------------
-# Stage 2: Bronze SQL tests
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 2 / 6  -  BRONZE SQL TESTS (tests/bronze)"
-Write-PipelineLog -Level "INFO" -Message "Running Bronze SQL tests"
-
-uv run python scripts/sql_test.py tests/bronze
-if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Bronze Tests" }
-$StageResults["Bronze Tests"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "Bronze SQL tests passed"
-Write-StagePass "Bronze SQL tests passed"
-
-# ---------------------------------------------------------------------------
-# Stage 3: dbt silver build + test
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 3 / 6  -  DBT SILVER (walmart_dbt)"
-Write-PipelineLog -Level "INFO" -Message "Running dbt Silver build and tests"
-
-Set-Location "$ProjectRoot/walmart_dbt"
-
-uv run dbt run --select silver
-$dbtRunExit = $LASTEXITCODE
-
-if ($dbtRunExit -eq 0) {
-    uv run dbt test --select silver
-    $dbtTestExit = $LASTEXITCODE
-} else {
-    $dbtTestExit = 1
+    if ($exitCode -ne 0) {
+        throw "$Description exited with code $exitCode."
+    }
 }
 
-Set-Location $ProjectRoot
+function Invoke-Preflight {
+    $versionOutput = & uv run python -c "import pyspark; print(pyspark.__version__)" 2>&1
+    $exitCode = $LASTEXITCODE
 
-if ($dbtRunExit -ne 0 -or $dbtTestExit -ne 0) { Stop-Pipeline "Silver dbt" }
-$StageResults["Silver dbt"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "dbt Silver build and tests passed"
-Write-StagePass "dbt silver build + tests passed"
+    if ($exitCode -ne 0) {
+        throw "PySpark could not be imported. Run 'uv sync' to install the locked project dependencies."
+    }
 
-# ---------------------------------------------------------------------------
-# Stage 4: Silver SQL tests
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 4 / 6  -  SILVER SQL TESTS (tests/silver)"
-Write-PipelineLog -Level "INFO" -Message "Running Silver SQL tests"
+    $installedVersion = ($versionOutput | Select-Object -Last 1).ToString().Trim()
+    if ($installedVersion -notlike "$script:RequiredPysparkPrefix*") {
+        throw "PySpark $installedVersion is incompatible; this project requires $script:RequiredPysparkPrefix.x. Run 'uv sync' to restore the locked version."
+    }
 
-uv run python scripts/sql_test.py tests/silver
-if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Silver Tests" }
-$StageResults["Silver Tests"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "Silver SQL tests passed"
-Write-StagePass "Silver SQL tests passed"
-
-# ---------------------------------------------------------------------------
-# Stage 5: dbt gold build + test
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 5 / 6  -  DBT GOLD (walmart_dbt)"
-Write-PipelineLog -Level "INFO" -Message "Running dbt Gold build and tests"
-
-Set-Location "$ProjectRoot/walmart_dbt"
-
-uv run dbt run --select gold
-$dbtGoldRunExit = $LASTEXITCODE
-
-if ($dbtGoldRunExit -eq 0) {
-    uv run dbt test --select gold
-    $dbtGoldTestExit = $LASTEXITCODE
-} else {
-    $dbtGoldTestExit = 1
+    Write-PipelineLog -Message "Preflight passed: PySpark $installedVersion"
 }
 
-Set-Location $ProjectRoot
+function Invoke-PipelineStage {
+    param(
+        [Parameter(Mandatory)][int]$Number,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Title,
+        [Parameter(Mandatory)][scriptblock]$Action
+    )
 
-if ($dbtGoldRunExit -ne 0 -or $dbtGoldTestExit -ne 0) { Stop-Pipeline "Gold dbt" }
-$StageResults["Gold dbt"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "dbt Gold build and tests passed"
-Write-StagePass "dbt gold build + tests passed"
+    Write-StageHeader "STEP $Number / $script:TotalStages  -  $Title"
+    try {
+        & $Action
+    }
+    catch {
+        Stop-Pipeline -FailedStage $Name -ErrorRecord $_
+    }
 
-# ---------------------------------------------------------------------------
-# Stage 6: Gold SQL tests
-# ---------------------------------------------------------------------------
-Write-StageHeader "STEP 6 / 6  -  GOLD SQL TESTS (tests/gold)"
-Write-PipelineLog -Level "INFO" -Message "Running Gold SQL tests"
+    $script:StageResults[$Name] = "PASS"
+    Write-StagePass "$Name completed"
+}
 
-uv run python scripts/sql_test.py tests/gold
-if ($LASTEXITCODE -ne 0) { Stop-Pipeline "Gold Tests" }
-$StageResults["Gold Tests"] = "PASS"
-Write-PipelineLog -Level "INFO" -Message "Gold SQL tests passed"
-Write-StagePass "Gold SQL tests passed"
+if (-not $NoClear -and -not [Console]::IsOutputRedirected) {
+    Clear-Host
+}
 
-# ---------------------------------------------------------------------------
-# Done
-# ---------------------------------------------------------------------------
-Write-PipelineLog -Level "INFO" -Message "Pipeline completed successfully"
+try {
+    Set-Location $script:ProjectRoot
+    $env:PYTHONPATH = $script:ProjectRoot
+    $env:PYTHONIOENCODING = "utf-8"
+
+    Assert-Prerequisites
+    Import-DotEnv
+    Write-PipelineLog -Message "Pipeline started from $script:ProjectRoot"
+
+    Invoke-PipelineStage -Number 0 -Name "Preflight" -Title "PREFLIGHT (dependency check)" -Action {
+        Invoke-Preflight
+    }
+
+    Invoke-PipelineStage -Number 1 -Name "Extract" -Title "EXTRACT (MongoDB to Bronze)" -Action {
+        Invoke-PipelineCommand -Description "Extract" -Command @("uv", "run", "python", "scripts/extract.py")
+    }
+
+    Invoke-PipelineStage -Number 2 -Name "Bronze Tests" -Title "BRONZE SQL TESTS" -Action {
+        Invoke-PipelineCommand -Description "Bronze SQL tests" -Command @("uv", "run", "python", "scripts/sql_test.py", "tests/bronze")
+    }
+
+    Invoke-PipelineStage -Number 3 -Name "Silver dbt" -Title "DBT SILVER (build and test)" -Action {
+        Invoke-PipelineCommand -Description "dbt silver build" -Command @("uv", "run", "dbt", "run", "--select", "silver") -WorkingDirectory $script:DbtProjectRoot
+        Invoke-PipelineCommand -Description "dbt silver tests" -Command @("uv", "run", "dbt", "test", "--select", "silver") -WorkingDirectory $script:DbtProjectRoot
+    }
+
+    Invoke-PipelineStage -Number 4 -Name "Silver Tests" -Title "SILVER SQL TESTS" -Action {
+        Invoke-PipelineCommand -Description "Silver SQL tests" -Command @("uv", "run", "python", "scripts/sql_test.py", "tests/silver")
+    }
+
+    Invoke-PipelineStage -Number 5 -Name "Gold dbt" -Title "DBT GOLD (build and test)" -Action {
+        Invoke-PipelineCommand -Description "dbt gold build" -Command @("uv", "run", "dbt", "run", "--select", "gold") -WorkingDirectory $script:DbtProjectRoot
+        Invoke-PipelineCommand -Description "dbt gold tests" -Command @("uv", "run", "dbt", "test", "--select", "gold") -WorkingDirectory $script:DbtProjectRoot
+    }
+
+    Invoke-PipelineStage -Number 6 -Name "Gold Tests" -Title "GOLD SQL TESTS" -Action {
+        Invoke-PipelineCommand -Description "Gold SQL tests" -Command @("uv", "run", "python", "scripts/sql_test.py", "tests/gold")
+    }
+
+    Invoke-PipelineStage -Number 7 -Name "Great Expectations" -Title "GREAT EXPECTATIONS TESTS (Bronze, Silver, Gold)" -Action {
+        Invoke-PipelineCommand -Description "Great Expectations tests" -Command @("uv", "run", "python", "-m", "pipeline.data_quality.run", "--layer", "all")
+    }
+}
+catch {
+    Write-StageFail "Pipeline setup failed. $($_.Exception.Message)"
+    Write-PipelineLog -Level "ERROR" -Message "Pipeline setup failed: $($_.Exception.Message)"
+    exit 1
+}
+
+Write-PipelineLog -Message "Pipeline completed successfully"
 Write-Summary
+exit 0

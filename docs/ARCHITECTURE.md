@@ -9,7 +9,7 @@
 # Architecture — Walmart Medallion Pipeline
 
 This is the single map of the system: what it is, how data moves through
-it, how one seven-stage pipeline runs three different ways (a Windows
+it, how one eight-stage pipeline runs three different ways (a Windows
 script, a standalone Docker image, and an Airflow DAG), and how the
 supporting pieces — `utils/`, `docker/`, `walmart_dbt/`, `tests/` — fit
 around that core. Every section links out to the doc that covers it in
@@ -36,10 +36,9 @@ full; this file is the overview, not a replacement for `docs/*.md`.
 A **medallion-architecture ETL pipeline**: it pulls operational data out
 of MongoDB, lands it as raw bronze tables in Postgres, cleans and
 deduplicates it into silver, and reshapes it into a dimensional gold
-layer — validated by SQL checks and dbt tests at every handoff. The full
-pipeline is currently runnable directly on Windows or through Airflow; the
-standalone Docker image is built and published, but its `main.py` command is
-still a scaffold and does not yet execute the pipeline.
+layer — validated by SQL checks, dbt tests, and a final Great Expectations
+gate. The full pipeline is runnable directly on Windows, through Airflow, or
+through the standalone Docker image.
 
 ```mermaid
 flowchart LR
@@ -70,11 +69,10 @@ to build from it — see [§4](#4-the-medallion-layers-and-what-gates-each-trans
 
 ## 2. Execution paths and implementation status
 
-The project has **one logical seven-stage pipeline** and two complete ways to
+The project has **one logical eight-stage pipeline** and three complete ways to
 run it. `pipeline/run_pipeline.ps1` is the local Windows runner; the Airflow
-DAG runs the same gates as individual containerized tasks. A standalone Docker
-image is also defined, but it is not a third runner yet: `main.py` currently
-only prints a placeholder message after `entrypoint.sh` checks Postgres.
+DAG runs the same gates as individual containerized tasks; and `main.py` is the
+cross-platform runner used by the standalone image.
 
 ```mermaid
 flowchart TD
@@ -95,28 +93,27 @@ flowchart TD
         S4["4. Silver SQL tests"]
         S5["5. dbt gold (run + test)"]
         S6["6. Gold SQL tests"]
-        S0-->S1-->S2-->S3-->S4-->S5-->S6
+        S7["7. Great Expectations tests"]
+        S0-->S1-->S2-->S3-->S4-->S5-->S6-->S7
     end
 
-    subgraph Scaffold["Standalone Docker image — scaffold only"]
+    subgraph Standalone["Standalone Docker image"]
         IMG["docker/Dockerfile"] --> ENTRY["entrypoint.sh<br/>checks Postgres"]
-        ENTRY --> MAIN["main.py<br/>placeholder; no ETL stages"]
+        ENTRY --> MAIN["main.py<br/>runs all eight stages"]
     end
 ```
 
 | | `run_pipeline.ps1` | Airflow DAG | Standalone `docker run` |
 |---|---|---|---|
 | **Where it runs** | Directly on the Windows host | `airflow-worker` in the Compose stack | Any Docker host, self-contained image |
-| **Stop-on-failure** | Each stage checks `$LASTEXITCODE` and calls `Stop-Pipeline` | Airflow's default `all_success` trigger rule blocks downstream tasks | Not applicable: no stages run |
-| **`.env` loading** | `Import-DotEnv` line-by-line parser | Each task sources `.env` in the DAG `_PREAMBLE` | Supplied at `docker run` time, but unused by placeholder `main.py` |
-| **`localhost` correctness** | Correct as-is on the host | `_PREAMBLE` rewrites host services to `host.docker.internal` | Must be supplied correctly by the caller when the image is implemented |
+| **Stop-on-failure** | Each stage checks `$LASTEXITCODE` and calls `Stop-Pipeline` | Airflow's default `all_success` trigger rule blocks downstream tasks | `main.py` stops at the first failed command |
+| **`.env` loading** | `Import-DotEnv` line-by-line parser | Each task sources `.env` in the DAG `_PREAMBLE` | Supplied at `docker run` time and loaded by `main.py` |
+| **`localhost` correctness** | Correct as-is on the host | `_PREAMBLE` rewrites host services to `host.docker.internal` | Must be supplied correctly by the caller |
 | **Code delivery** | Already on disk | Project bind-mounted at `/app` | Baked into the image with `COPY . .` |
-| **Status** | Implemented | Implemented | Buildable scaffold; not an ETL runner |
+| **Status** | Implemented | Implemented | Implemented |
 
 > **Maintenance rule:** Any change to stage order or success criteria must be
-> made in both `run_pipeline.ps1` and the Airflow DAG. When `main.py` is
-> implemented as a runner, it must join that same contract before it is
-> documented as a third execution path.
+> made in `run_pipeline.ps1`, the Airflow DAG, and `main.py` together.
 
 ---
 
@@ -130,9 +127,9 @@ flowchart TB
         HOSTMONGO[("MongoDB<br/>host.docker.internal:27017")]
     end
 
-    subgraph Standalone["Standalone image path — scaffold"]
+    subgraph Standalone["Standalone image path"]
         IMG1["walmart-pipeline image<br/>python:3.12-slim + JDK 17 + uv"]
-        RUN1["entrypoint.sh waits for Postgres,<br/>then execs placeholder main.py"]
+        RUN1["entrypoint.sh waits for Postgres,<br/>then execs main.py"]
         IMG1 --> RUN1
     end
 
@@ -268,10 +265,9 @@ flowchart LR
 | Convention | dbt's own pass/fail semantics | Auto-detected per file: either "SELECT returns violating rows" or "DO block raises an exception" |
 | Full detail | [`dbt.md`](dbt.md) | [`tests.md`](tests.md), [`scripts.md`](scripts.md) §2 |
 
-Both are wired into the implemented runners (`run_pipeline.ps1` and the
-Airflow DAG) as separate pipeline stages, not as a single combined "testing"
-step. The standalone image does not invoke either test system until `main.py`
-is implemented as a runner.
+Both are wired into every implemented runner as separate pipeline stages, not
+as a single combined "testing" step. Great Expectations is a final, separate
+eighth gate after the Gold SQL checks.
 
 ---
 
@@ -284,8 +280,8 @@ flowchart TD
         DFA["docker/Dockerfile.airflow"]
     end
 
-    DF -- "COPY . . (code baked in)<br/>base: python:3.12-slim" --> IMG1["walmart-pipeline<br/>self-contained scaffold image"]
-    IMG1 -- "docker run --env-file .env" --> RUN1["standalone container<br/>entrypoint.sh waits for Postgres,<br/>then CMD: placeholder main.py"]
+    DF -- "COPY . . (code baked in)<br/>base: python:3.12-slim" --> IMG1["walmart-pipeline<br/>self-contained runner image"]
+    IMG1 -- "docker run --env-file .env" --> RUN1["standalone container<br/>entrypoint.sh waits for Postgres,<br/>then CMD: main.py"]
 
     DFA -- "base: apache/airflow:3.3.0-python3.11<br/>+ JDK 17, uv" --> IMG2["docker-airflow-* image<br/>nearly empty of project code"]
     IMG2 --> SVC["every airflow-* service"]
@@ -315,7 +311,7 @@ flowchart TD
 
     ENV -->|"sourced, then corrected<br/>in the DAG's _PREAMBLE"| AF["Airflow @task.bash:<br/>POSTGRES_HOST → host.docker.internal<br/>MONGO_URI host → host.docker.internal<br/>PYSPARK_PYTHON forced to Linux path"]
 
-    ENV -. "supplied by docker run;<br/>no ETL currently runs" .-> STANDALONE["standalone image scaffold"]
+    ENV -. "supplied by docker run;<br/>container-correct hosts required" .-> STANDALONE["standalone image runner"]
 
     style ENV fill:#4a5568,color:#fff
 ```
@@ -323,8 +319,8 @@ flowchart TD
 Why this design: `.env` is referenced by multiple independent files
 (`run_pipeline.ps1` included), so correcting it in place would break the
 one context where it's already right. Every container-specific fix happens in
-the consuming layer instead. The standalone image has no ETL configuration
-rewrite yet because `main.py` is not an implemented runner. Full mechanics:
+the consuming layer instead. The standalone image must receive
+container-correct connection settings from its caller. Full mechanics:
 [`airflow.md`](airflow.md) §3, [`docker.md`](docker.md) §9.
 
 ---
@@ -402,7 +398,7 @@ walmart
 ├─ notebooks/               → exploratory Mongo notebook
 ├─ health_check.py          → Rich local runtime-health report
 ├─ security_check.py        → Rich static secret and hardening report
-├─ main.py                  → placeholder entry point for the standalone Docker image
+├─ main.py                  → cross-platform entry point for the standalone Docker image
 └─ pyproject.toml / uv.lock → dependency management via uv
 ```
 

@@ -10,6 +10,7 @@ Mirrors pipeline/run_pipeline.ps1 stage-for-stage and in the same order:
     4. Silver SQL tests (tests/silver/*.sql)
     5. dbt gold build + test (walmart_dbt, models/gold)
     6. Gold SQL tests (tests/gold/*.sql)
+    7. Great Expectations tests (Bronze, Silver, Gold)
 
 Stop-on-first-failure is native to this: Airflow's default trigger rule
 (all_success) means the moment one task fails, everything downstream goes
@@ -28,7 +29,6 @@ PROJECT_ROOT = "/app"
 DBT_PROJECT_DIR = f"{PROJECT_ROOT}/walmart_dbt"
 
 REQUIRED_PYSPARK_PREFIX = "3.5"
-REQUIRED_PYSPARK_VERSION = "3.5.5"
 
 # BashOperator/@task.bash does not auto-load .env the way ps1's Import-DotEnv
 # does, so every task sources it explicitly. Silently no-ops if missing,
@@ -82,13 +82,9 @@ def walmart_medallion_pipeline():
         return _PREAMBLE + (
             'installed="$(uv run python -c '
             "'import pyspark; print(pyspark.__version__)' 2>/dev/null || true)\"; "
-            f'if [ -z "$installed" ]; then '
-            f'echo "pyspark not found, installing {REQUIRED_PYSPARK_VERSION}"; '
-            f'uv add "pyspark=={REQUIRED_PYSPARK_VERSION}"; '
-            f'elif [[ "$installed" != {REQUIRED_PYSPARK_PREFIX}* ]]; then '
-            f'echo "pyspark $installed detected, mongo-spark-connector needs '
-            f'{REQUIRED_PYSPARK_PREFIX}.x, pinning"; '
-            f'uv add "pyspark=={REQUIRED_PYSPARK_VERSION}"; '
+            f'if [[ "$installed" != {REQUIRED_PYSPARK_PREFIX}* ]]; then '
+            f'echo "pyspark $installed is incompatible; run uv sync to restore '
+            f'{REQUIRED_PYSPARK_PREFIX}.x"; exit 1; '
             f'else echo "pyspark $installed OK"; fi'
         )
 
@@ -124,6 +120,10 @@ def walmart_medallion_pipeline():
     def gold_sql_tests() -> str:
         return _PREAMBLE + "uv run python scripts/sql_test.py tests/gold"
 
+    @task.bash(task_id="great_expectations_tests")
+    def great_expectations_tests() -> str:
+        return _PREAMBLE + "uv run python -m pipeline.data_quality.run --layer all"
+
     (
         preflight()
         >> extract()
@@ -134,6 +134,7 @@ def walmart_medallion_pipeline():
         >> dbt_gold_run()
         >> dbt_gold_test()
         >> gold_sql_tests()
+        >> great_expectations_tests()
     )
 
 

@@ -135,7 +135,7 @@ def get_context() -> AbstractDataContext:
     log.info("Loading GX file-backed context")
     context = gx.get_context(mode="file")
 
-    if "walmart_postgres" not in [ds.name for ds in context.data_sources.all()]:
+    if "walmart_postgres" not in context.data_sources.all():
         log.info("Registering 'walmart_postgres' datasource")
         try:
             data_source = context.data_sources.add_postgres(
@@ -146,6 +146,9 @@ def get_context() -> AbstractDataContext:
             raise
     else:
         data_source = context.data_sources.get("walmart_postgres")
+        # Keep persisted asset definitions, but honour the current process's
+        # .env values (especially host.docker.internal in container runners).
+        data_source.connection_string = _connection_string()
 
     existing_assets = {a.name for a in data_source.assets}
     # Both layers share one Postgres datasource -- they're different

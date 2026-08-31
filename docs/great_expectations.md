@@ -2,8 +2,8 @@
 
 This project uses [Great Expectations (GX)](https://greatexpectations.io/) to
 validate the tables in the Bronze, Silver, and Gold PostgreSQL schemas. GX is
-an additional, on-demand data-quality check. It does **not** replace the dbt
-tests or the standalone SQL checks that are part of the seven-stage pipeline.
+the final, eighth data-quality gate. It supplements rather than replaces dbt
+tests and the standalone SQL checks that run earlier in the pipeline.
 
 ## What GX validates
 
@@ -35,11 +35,11 @@ uv sync
 Your `.env` must contain the PostgreSQL settings used by `utils/engine.py`, and
 the schemas and tables being checked must already exist.
 
-### Required compatibility fix
+### Datasource compatibility
 
 GX 1.21 returns datasource names when `context.data_sources.all()` is iterated.
-Before the first run, ensure [`pipeline/data_quality/context.py`](../pipeline/data_quality/context.py)
-contains this condition in `get_context()`:
+[`pipeline/data_quality/context.py`](../pipeline/data_quality/context.py)
+uses this GX 1.21-compatible condition in `get_context()`:
 
 ```python
 if "walmart_postgres" not in context.data_sources.all():
@@ -88,10 +88,9 @@ run (for example, because of a connection, schema, or configuration error).
 4. It prints a pass/fail result for every table and returns a meaningful exit
    code for shells and orchestrators.
 
-The current Windows runner and Airflow DAG do not invoke GX. Run the command
-above as a separate quality check until GX is intentionally added as a pipeline
-stage; doing so would require updating both runners under the pipeline-stage
-rule.
+GX runs automatically as stage 7 after the Gold SQL tests in the PowerShell,
+Airflow, and standalone runners. Use the commands above to run one layer or
+re-run all GX checks independently.
 
 ## File map
 

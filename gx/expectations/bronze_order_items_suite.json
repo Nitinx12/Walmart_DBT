@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "726f5445-3762-4c57-a0be-f9ab73f4368f",
+      "id": "8731d336-5138-4302-818d-731bf9ac39c8",
       "kwargs": {
         "column": "order_item_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "39df7572-0868-4898-aef9-52ea964e0e36",
+      "id": "9504ba32-50cb-475f-b19e-191308a113cd",
       "kwargs": {
         "column": "order_item_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "26793a51-20d2-4e2c-b5cc-af3720b50af3",
+      "id": "5c06db64-3319-44b5-8ef6-694d3798dbf4",
       "kwargs": {
         "column": "order_id"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "9ee7227c-d03e-48b9-a65a-ae6a556c631c",
+      "id": "8b89bb47-54ff-437a-bd95-11e108e89b14",
       "kwargs": {
         "column": "product_id"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "63ee122e-47b1-4380-a2c2-7181cc497510",
+      "id": "5f11e6e7-987c-462b-ab0f-b18a25ffa4ef",
       "kwargs": {
         "column": "quantity",
         "min_value": 1.0
@@ -47,7 +47,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "e4c9c1dc-70ce-4840-808a-eae22dfa1f3c",
+      "id": "bd6badec-8725-469e-a465-7874802bc0f2",
       "kwargs": {
         "column": "unit_price",
         "min_value": 0.0
@@ -57,7 +57,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "66b81ef5-641c-40de-8671-61536a0666bb",
+      "id": "39d7bd84-cef9-4c34-acf3-42fb2ae435bb",
       "kwargs": {
         "column": "line_amount",
         "min_value": 0.0
