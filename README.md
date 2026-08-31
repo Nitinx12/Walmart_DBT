@@ -15,9 +15,9 @@ Built to mirror how a real analytics-engineering team would ship this not a note
 
 ## 📊 Live Dashboard
 
-**[→ Try the interactive sales dashboard](https://your-app-name.streamlit.app)**
+**[→ Try the interactive sales dashboard](https://walmartdbt-b3fdfqwyky3ghzr5syyxtu.streamlit.app/)**
 
-A Streamlit + Plotly dashboard reading from the gold star schema — revenue trends, store/category/brand breakdowns, top products and customers, all with period-over-period KPI deltas. The hosted demo runs against a separate, seeded database with anonymized sample data (see [`scripts/seed_demo_db.py`](scripts/seed_demo_db.py)) — it is not the live production pipeline. Full write-up: [`dashboard/README.md`](dashboard/README.md).
+A Streamlit + Plotly dashboard reading from the gold star schema — revenue trends, store/category/brand breakdowns, top products and customers, all with period-over-period KPI deltas. The hosted demo runs against a separate, seeded database with anonymized sample data (see [`scripts/seed_demo_db.py`](scripts/seed_demo_db.py)) it is not the live production pipeline. Full write-up: [`dashboard/README.md`](dashboard/README.md).
 
 ## Architecture at a glance
 
