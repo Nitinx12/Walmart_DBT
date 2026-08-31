@@ -197,7 +197,7 @@ def run(layers: list, fail_fast: bool = False) -> int:
     return EXIT_OK
 
 
-def main(argv: list = None) -> int:
+def main(argv: list | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run Great Expectations suites for the pipeline.")
     parser.add_argument(
         "--layer",

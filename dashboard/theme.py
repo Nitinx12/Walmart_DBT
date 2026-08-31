@@ -31,15 +31,15 @@ def style(fig: go.Figure, *, currency: bool = True, legend: bool = True, height:
     it matches the Streamlit theme), shared font, brand color sequence,
     and optional currency-formatted axis."""
     fig.update_layout(
-        font=dict(family=FONT_FAMILY, size=13, color="#1A1A1A"),
+        font={"family": FONT_FAMILY, "size": 13, "color": "#1A1A1A"},
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=10, r=10, t=45, b=10),
+        margin={"l": 10, "r": 10, "t": 45, "b": 10},
         showlegend=legend,
         colorway=PALETTE,
         height=height,
-        hoverlabel=dict(font_size=13, font_family=FONT_FAMILY),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hoverlabel={"font_size": 13, "font_family": FONT_FAMILY},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
     )
     fig.update_xaxes(showgrid=False, showline=True, linecolor="rgba(0,0,0,0.15)")
     fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)

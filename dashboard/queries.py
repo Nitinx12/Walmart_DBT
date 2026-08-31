@@ -52,7 +52,7 @@ class Filters:
     categories: tuple = field(default_factory=tuple)
     statuses: tuple = field(default_factory=tuple)
 
-    def previous_period(self) -> "Filters":
+    def previous_period(self) -> Filters:
         """Same filters, shifted back by one period-length — used to
         compute period-over-period KPI deltas."""
         span = (self.end_date - self.start_date).days

@@ -76,8 +76,8 @@ def log_line(level: str, message: str) -> None:
     """
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
-        log_file = LOG_DIR / f"pipeline_{datetime.now():%Y-%m-%d}.log"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_file = LOG_DIR / f"pipeline_{datetime.now():%Y-%m-%d}.log"  # noqa: DTZ005 -- local time intentional for log file naming
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # noqa: DTZ005 -- local time intentional for log messages
         with log_file.open("a", encoding="utf-8") as fh:
             fh.write(f"{timestamp} | {level:<8} | pipeline | {message}\n")
     except OSError as exc:
@@ -242,7 +242,7 @@ def main() -> int:
             print(f"[PASS] {stage.name}")
             log_line("INFO", f"PASS - {stage.name}")
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- top-level pipeline guard, catches any stage failure to print a clean summary
         print()
         print("=" * 60)
         print(" PIPELINE FAILED")

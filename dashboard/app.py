@@ -39,7 +39,7 @@ import streamlit as st
 try:
     for _key, _value in st.secrets.items():
         os.environ.setdefault(_key, str(_value))
-except Exception:
+except Exception:  # noqa: BLE001, S110 -- secrets.toml is optional locally, .env handles it instead
     pass  # no secrets.toml locally — expected, .env handles it instead
 
 from dashboard.queries import (
@@ -68,7 +68,7 @@ st.markdown(inject_css(), unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 try:
     options = get_filter_options()
-except Exception as exc:  # noqa: BLE001 — surface connection/config errors plainly
+except Exception as exc:
     log.exception("Failed to load filter options from gold schema")
     st.error(f"Could not connect to the database: {exc}")
     st.stop()
@@ -149,7 +149,7 @@ fig_trend = px.area(
     trend, x="period", y="revenue",
     labels={"period": "", "revenue": "Revenue"},
 )
-fig_trend.update_traces(line=dict(color=PALETTE[0], width=2.5), fillcolor="rgba(0,113,206,0.15)")
+fig_trend.update_traces(line={"color": PALETTE[0], "width": 2.5}, fillcolor="rgba(0,113,206,0.15)")
 st.plotly_chart(style(fig_trend, legend=False, height=340), use_container_width=True)
 
 
