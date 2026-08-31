@@ -5,15 +5,20 @@ description = "Walmart Medallion Data Pipeline"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "apache-airflow>=3.3.1",
+    "dash>=4.4.1",
     "databricks>=0.2",
     "dbt-core>=1.12.0",
     "dbt-postgres>=1.11.0",
     "dotenv>=0.9.9",
+    "great-expectations>=1.21.0",
     "logging>=0.4.9.6",
     "matplotlib>=3.11.1",
     "mongo>=0.2.0",
     "npm>=0.1.1",
     "package-name>=0.1",
+    "pandas>=3.0.5",
+    "plotly>=7.0.0",
     "postgres>=4.0",
     "pyarrow>=25.0.0",
     "pymongo>=4.17.0",
@@ -21,6 +26,8 @@ dependencies = [
     "rich>=15.0.0",
     "seaborn>=0.13.2",
     "sqlalchemy>=2.0.51",
+    "streamlit>=1.62.0",
+    "yml>=0.0.1",
 ]
 
 [dependency-groups]
