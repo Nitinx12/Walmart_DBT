@@ -38,7 +38,9 @@ from utils.logger import get_logger
 log = get_logger("data_quality.bronze_suites", console_level=logging.WARNING)
 
 
-def _build(table_name: str, suite_name: str, expectations: list) -> gx.ValidationDefinition:
+def _build(
+    table_name: str, suite_name: str, expectations: list
+) -> gx.ValidationDefinition:
     context = get_context()
     asset = get_bronze_asset(table_name)
 
@@ -58,7 +60,9 @@ def _build(table_name: str, suite_name: str, expectations: list) -> gx.Validatio
     # already-existing suite.
     log.info(f"Building suite '{suite_name}' ({len(expectations)} expectations)")
     suite = context.suites.add_or_update(
-        gx.core.expectation_suite.ExpectationSuite(name=suite_name, expectations=expectations)
+        gx.core.expectation_suite.ExpectationSuite(
+            name=suite_name, expectations=expectations
+        )
     )
 
     validation_name = f"{table_name}_validation"
@@ -117,7 +121,9 @@ def orders_validation() -> gx.ValidationDefinition:
             gx.expectations.ExpectColumnValuesToBeUnique(column="order_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="customer_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="store_id"),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="total_amount", min_value=0),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="total_amount", min_value=0
+            ),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="order_status"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="payment_method"),
         ],
@@ -133,9 +139,15 @@ def order_items_validation() -> gx.ValidationDefinition:
             gx.expectations.ExpectColumnValuesToBeUnique(column="order_item_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="order_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="product_id"),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="quantity", min_value=1),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="unit_price", min_value=0),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="line_amount", min_value=0),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="quantity", min_value=1
+            ),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="unit_price", min_value=0
+            ),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="line_amount", min_value=0
+            ),
         ],
     )
 

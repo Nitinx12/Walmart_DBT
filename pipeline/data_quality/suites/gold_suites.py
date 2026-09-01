@@ -63,7 +63,9 @@ from utils.logger import get_logger
 log = get_logger("data_quality.gold_suites", console_level=logging.WARNING)
 
 
-def _build(table_name: str, suite_name: str, expectations: list) -> gx.ValidationDefinition:
+def _build(
+    table_name: str, suite_name: str, expectations: list
+) -> gx.ValidationDefinition:
     context = get_context()
     asset = get_gold_asset(table_name)
 
@@ -80,7 +82,9 @@ def _build(table_name: str, suite_name: str, expectations: list) -> gx.Validatio
 
     log.info(f"Building suite '{suite_name}' ({len(expectations)} expectations)")
     suite = context.suites.add_or_update(
-        gx.core.expectation_suite.ExpectationSuite(name=suite_name, expectations=expectations)
+        gx.core.expectation_suite.ExpectationSuite(
+            name=suite_name, expectations=expectations
+        )
     )
 
     # validation_definitions are registered globally on the context (see
@@ -216,7 +220,9 @@ def dim_orders_validation() -> gx.ValidationDefinition:
             # ASSUMPTIONS note.
             gx.expectations.ExpectColumnValuesToNotBeNull(column="payment_method_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="order_status"),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="total_amount", min_value=0),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="total_amount", min_value=0
+            ),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="order_timestamp"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="is_active"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="gold_loaded_at"),
@@ -235,11 +241,17 @@ def fact_order_items_validation() -> gx.ValidationDefinition:
             # ASSUMPTIONS note; referential integrity itself isn't checked here.
             gx.expectations.ExpectColumnValuesToNotBeNull(column="order_id"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="product_id"),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="quantity", min_value=1),
-            gx.expectations.ExpectColumnValuesToBeBetween(column="unit_price", min_value=0),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="quantity", min_value=1
+            ),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="unit_price", min_value=0
+            ),
             # NOT cross-checked against quantity * unit_price -- see module
             # docstring's ASSUMPTIONS note.
-            gx.expectations.ExpectColumnValuesToBeBetween(column="line_amount", min_value=0),
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column="line_amount", min_value=0
+            ),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="is_active"),
             gx.expectations.ExpectColumnValuesToNotBeNull(column="gold_loaded_at"),
         ],

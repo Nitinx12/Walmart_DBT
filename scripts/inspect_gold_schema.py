@@ -20,7 +20,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from utils.connection import get_postgres_engine  # noqa: E402
+from utils.connection import get_postgres_engine
 
 engine = get_postgres_engine()
 
@@ -34,8 +34,10 @@ query = """
 df = pd.read_sql(query, engine)
 
 if df.empty:
-    print("No tables found in the 'gold' schema. Check POSTGRES_SCHEMA_GOLD in .env "
-          "and that dbt has actually built the gold models yet.")
+    print(
+        "No tables found in the 'gold' schema. Check POSTGRES_SCHEMA_GOLD in .env "
+        "and that dbt has actually built the gold models yet."
+    )
 else:
     for table_name, group in df.groupby("table_name"):
         print(f"\n{table_name}")

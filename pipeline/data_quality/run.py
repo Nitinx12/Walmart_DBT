@@ -107,7 +107,9 @@ class LayerResult:
     ran: bool  # False if the checkpoint never executed (build/connection error)
     success: bool = False
     passed_tables: list = field(default_factory=list)
-    failed_tables: list = field(default_factory=list)  # [(table, [failure summaries]), ...]
+    failed_tables: list = field(
+        default_factory=list
+    )  # [(table, [failure summaries]), ...]
 
 
 def _build_validation_definitions(layer: str, validation_fns: list) -> list:
@@ -121,7 +123,9 @@ def _build_validation_definitions(layer: str, validation_fns: list) -> list:
         try:
             validation_definitions.append(validation_fn())
         except Exception:
-            log.exception(f"[{layer}] failed to build suite for '{table_label}' -- skipping it")
+            log.exception(
+                f"[{layer}] failed to build suite for '{table_label}' -- skipping it"
+            )
     return validation_definitions
 
 
@@ -130,14 +134,20 @@ def _run_layer(layer: str, validation_fns: list) -> LayerResult:
     validation_definitions = _build_validation_definitions(layer, validation_fns)
 
     if not validation_definitions:
-        log.error(f"[{layer}] no validation definitions could be built -- skipping this layer")
+        log.error(
+            f"[{layer}] no validation definitions could be built -- skipping this layer"
+        )
         return LayerResult(layer=layer, ran=False)
 
     checkpoint_name = f"{layer}_checkpoint"
-    log.info(f"[{layer}] running '{checkpoint_name}' ({len(validation_definitions)} tables)")
+    log.info(
+        f"[{layer}] running '{checkpoint_name}' ({len(validation_definitions)} tables)"
+    )
     try:
         checkpoint = context.checkpoints.add_or_update(
-            gx.Checkpoint(name=checkpoint_name, validation_definitions=validation_definitions)
+            gx.Checkpoint(
+                name=checkpoint_name, validation_definitions=validation_definitions
+            )
         )
         checkpoint_result = checkpoint.run()
     except Exception:
@@ -146,7 +156,9 @@ def _run_layer(layer: str, validation_fns: list) -> LayerResult:
 
     result = LayerResult(layer=layer, ran=True, success=checkpoint_result.success)
     for validation_result in checkpoint_result.run_results.values():
-        table_label = validation_result.suite_name.removeprefix(f"{layer}_").removesuffix("_suite")
+        table_label = validation_result.suite_name.removeprefix(
+            f"{layer}_"
+        ).removesuffix("_suite")
         if validation_result.success:
             result.passed_tables.append(table_label)
             log.info(f"[{layer}] PASS  {table_label}")
@@ -172,7 +184,9 @@ def _log_summary(results: list) -> None:
             continue
         total = len(result.passed_tables) + len(result.failed_tables)
         status = "" if result.success else "  <-- FAILED"
-        log.info(f"{result.layer:<8} {len(result.passed_tables)}/{total} tables passed{status}")
+        log.info(
+            f"{result.layer:<8} {len(result.passed_tables)}/{total} tables passed{status}"
+        )
         for table, failures in result.failed_tables:
             for failure in failures:
                 log.info(f"    - {table}: {failure}")
@@ -198,7 +212,9 @@ def run(layers: list, fail_fast: bool = False) -> int:
 
 
 def main(argv: list | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run Great Expectations suites for the pipeline.")
+    parser = argparse.ArgumentParser(
+        description="Run Great Expectations suites for the pipeline."
+    )
     parser.add_argument(
         "--layer",
         choices=["bronze", "silver", "gold", "all"],

@@ -26,7 +26,9 @@ PALETTE = [
 FONT_FAMILY = "'Segoe UI', Helvetica, Arial, sans-serif"
 
 
-def style(fig: go.Figure, *, currency: bool = True, legend: bool = True, height: int = 380) -> go.Figure:
+def style(
+    fig: go.Figure, *, currency: bool = True, legend: bool = True, height: int = 380
+) -> go.Figure:
     """Apply one consistent look to a chart: transparent background (so
     it matches the Streamlit theme), shared font, brand color sequence,
     and optional currency-formatted axis."""
@@ -39,7 +41,13 @@ def style(fig: go.Figure, *, currency: bool = True, legend: bool = True, height:
         colorway=PALETTE,
         height=height,
         hoverlabel={"font_size": 13, "font_family": FONT_FAMILY},
-        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+        },
     )
     fig.update_xaxes(showgrid=False, showline=True, linecolor="rgba(0,0,0,0.15)")
     fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)

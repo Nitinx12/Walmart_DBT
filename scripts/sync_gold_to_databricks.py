@@ -29,7 +29,7 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -42,8 +42,11 @@ from sqlalchemy import text
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils import engine as config  # noqa: E402
-from utils.connection import get_databricks_connection, get_postgres_engine  # noqa: E402
+from utils import engine as config
+from utils.connection import (
+    get_databricks_connection,
+    get_postgres_engine,
+)
 
 console = Console()
 
@@ -136,7 +139,9 @@ def fetch_columns(pg_engine, schema: str, table: str) -> list[ColumnInfo]:
     with pg_engine.connect() as conn:
         rows = conn.execute(query, {"schema": schema, "table": table}).mappings().all()
     if not rows:
-        raise ValueError(f"No columns found for {schema}.{table} -- does the table exist?")
+        raise ValueError(
+            f"No columns found for {schema}.{table} -- does the table exist?"
+        )
     return [
         ColumnInfo(
             name=row["column_name"],
@@ -211,9 +216,13 @@ def _sql_literal(value: Any) -> str:
         if value.tzinfo is not None:
             # TIMESTAMP'...' string literals aren't reliable for tz-aware
             # values in Databricks. Use an exact epoch-micros int instead.
-            epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-            delta = value.astimezone(timezone.utc) - epoch
-            epoch_micros = delta.days * 86_400_000_000 + delta.seconds * 1_000_000 + delta.microseconds
+            epoch = datetime(1970, 1, 1, tzinfo=UTC)
+            delta = value.astimezone(UTC) - epoch
+            epoch_micros = (
+                delta.days * 86_400_000_000
+                + delta.seconds * 1_000_000
+                + delta.microseconds
+            )
             return f"TIMESTAMP_MICROS({epoch_micros})"
         return f"TIMESTAMP'{value.isoformat(sep=' ')}'"
     if isinstance(value, date):
@@ -250,7 +259,9 @@ def upsert_rows(
             # directly. Wrapping the VALUES in a SELECT sidesteps that: the
             # inner alias (a plain FROM clause) is fine, and the outer alias
             # has no column list.
-            source_sql = f"(SELECT {col_list} FROM (VALUES {values_sql}) AS v({col_list})) AS s"
+            source_sql = (
+                f"(SELECT {col_list} FROM (VALUES {values_sql}) AS v({col_list})) AS s"
+            )
             statement_parts = [
                 f"MERGE INTO {catalog}.{schema}.{table} AS t",
                 f"USING {source_sql}",
@@ -307,15 +318,28 @@ def sync_table(
     last_watermark = (
         None
         if full_refresh
-        else fetch_current_watermark(dbx_conn, catalog, dbx_schema, table, cfg.watermark_col)
+        else fetch_current_watermark(
+            dbx_conn, catalog, dbx_schema, table, cfg.watermark_col
+        )
     )
 
-    df = extract_incremental_rows(pg_engine, pg_schema, table, columns, cfg.watermark_col, last_watermark)
+    df = extract_incremental_rows(
+        pg_engine, pg_schema, table, columns, cfg.watermark_col, last_watermark
+    )
 
     if df.is_empty():
         return SyncOutcome(table, "NO CHANGE", "no new or changed rows")
 
-    upsert_rows(dbx_conn, catalog, dbx_schema, table, columns, cfg.primary_key, df.rows(named=True), dry_run)
+    upsert_rows(
+        dbx_conn,
+        catalog,
+        dbx_schema,
+        table,
+        columns,
+        cfg.primary_key,
+        df.rows(named=True),
+        dry_run,
+    )
     suffix = " (dry run)" if dry_run else ""
     return SyncOutcome(table, "SYNCED", f"{df.height} row(s) upserted{suffix}")
 
@@ -328,7 +352,9 @@ def render_summary(outcomes: list[SyncOutcome]) -> None:
     result_table.add_column("Detail")
     for outcome in outcomes:
         result_table.add_row(
-            outcome.table, f"[{styles[outcome.status]}]{outcome.status}[/]", outcome.detail
+            outcome.table,
+            f"[{styles[outcome.status]}]{outcome.status}[/]",
+            outcome.detail,
         )
     console.print(result_table)
 
@@ -346,7 +372,10 @@ def main() -> int:
         description="Incrementally sync Postgres gold tables into Databricks."
     )
     parser.add_argument(
-        "--only", nargs="*", metavar="TABLE", help="Only sync these tables (default: all)."
+        "--only",
+        nargs="*",
+        metavar="TABLE",
+        help="Only sync these tables (default: all).",
     )
     parser.add_argument(
         "--full-refresh",
@@ -374,7 +403,9 @@ def main() -> int:
         console.print("[red]POSTGRES_SCHEMA_GOLD is not set in .env[/red]")
         return 1
     if not catalog or not dbx_schema:
-        console.print("[red]DATABRICKS_CATALOG / DATABRICKS_SCHEMA is not set in .env[/red]")
+        console.print(
+            "[red]DATABRICKS_CATALOG / DATABRICKS_SCHEMA is not set in .env[/red]"
+        )
         return 1
 
     pg_engine = get_postgres_engine()

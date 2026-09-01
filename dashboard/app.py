@@ -94,16 +94,25 @@ if isinstance(selected_range, tuple) and len(selected_range) == 2:
 else:
     start_date, end_date_inclusive = options["min_date"], options["max_date"]
 
-selected_stores = st.sidebar.multiselect("Store(s)", options["stores"], default=options["stores"])
-selected_categories = st.sidebar.multiselect("Categor(y/ies)", options["categories"], default=options["categories"])
-selected_statuses = st.sidebar.multiselect("Order status", options["statuses"], default=options["statuses"])
+selected_stores = st.sidebar.multiselect(
+    "Store(s)", options["stores"], default=options["stores"]
+)
+selected_categories = st.sidebar.multiselect(
+    "Categor(y/ies)", options["categories"], default=options["categories"]
+)
+selected_statuses = st.sidebar.multiselect(
+    "Order status", options["statuses"], default=options["statuses"]
+)
 
-granularity_label = st.sidebar.radio("Trend granularity", ["Day", "Week", "Month"], index=1, horizontal=True)
+granularity_label = st.sidebar.radio(
+    "Trend granularity", ["Day", "Week", "Month"], index=1, horizontal=True
+)
 granularity = granularity_label.lower()
 
 filters = Filters(
     start_date=start_date,
-    end_date=end_date_inclusive + timedelta(days=1),  # inclusive UI date -> exclusive SQL bound
+    end_date=end_date_inclusive
+    + timedelta(days=1),  # inclusive UI date -> exclusive SQL bound
     stores=tuple(selected_stores),
     categories=tuple(selected_categories),
     statuses=tuple(selected_statuses),
@@ -114,7 +123,9 @@ filters = Filters(
 # KPIs, with period-over-period deltas
 # ---------------------------------------------------------------------------
 st.title("🛒 Walmart Sales Dashboard")
-st.caption(f"{start_date:%b %d, %Y} – {end_date_inclusive:%b %d, %Y} · gold schema, live from Postgres")
+st.caption(
+    f"{start_date:%b %d, %Y} – {end_date_inclusive:%b %d, %Y} · gold schema, live from Postgres"
+)
 
 current = get_kpis(filters)
 previous = get_kpis(filters.previous_period())
@@ -132,10 +143,24 @@ if current["orders"] == 0:
     st.stop()
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total Revenue", f"${current['revenue']:,.0f}", _delta(current["revenue"], previous["revenue"]))
-col2.metric("Orders", f"{current['orders']:,}", _delta(current["orders"], previous["orders"]))
-col3.metric("Customers", f"{current['customers']:,}", _delta(current["customers"], previous["customers"]))
-col4.metric("Avg Order Value", f"${current['aov']:,.2f}", _delta(current["aov"], previous["aov"]))
+col1.metric(
+    "Total Revenue",
+    f"${current['revenue']:,.0f}",
+    _delta(current["revenue"], previous["revenue"]),
+)
+col2.metric(
+    "Orders", f"{current['orders']:,}", _delta(current["orders"], previous["orders"])
+)
+col3.metric(
+    "Customers",
+    f"{current['customers']:,}",
+    _delta(current["customers"], previous["customers"]),
+)
+col4.metric(
+    "Avg Order Value",
+    f"${current['aov']:,.2f}",
+    _delta(current["aov"], previous["aov"]),
+)
 
 st.divider()
 
@@ -146,10 +171,14 @@ st.divider()
 st.subheader("Revenue Trend")
 trend = get_revenue_trend(filters, granularity)
 fig_trend = px.area(
-    trend, x="period", y="revenue",
+    trend,
+    x="period",
+    y="revenue",
     labels={"period": "", "revenue": "Revenue"},
 )
-fig_trend.update_traces(line={"color": PALETTE[0], "width": 2.5}, fillcolor="rgba(0,113,206,0.15)")
+fig_trend.update_traces(
+    line={"color": PALETTE[0], "width": 2.5}, fillcolor="rgba(0,113,206,0.15)"
+)
 st.plotly_chart(style(fig_trend, legend=False, height=340), use_container_width=True)
 
 
@@ -162,7 +191,10 @@ with left:
     st.subheader("Revenue by Store")
     by_store = get_revenue_by(filters, "store")
     fig_store = px.bar(
-        by_store, x="store", y="revenue", color="revenue",
+        by_store,
+        x="store",
+        y="revenue",
+        color="revenue",
         color_continuous_scale=["#B3D9F2", PALETTE[0]],
         labels={"store": "", "revenue": "Revenue"},
     )
@@ -174,7 +206,9 @@ with right:
     by_category = get_revenue_by(filters, "category")
     fig_category = px.pie(by_category, names="category", values="revenue", hole=0.55)
     fig_category.update_traces(textposition="outside", textinfo="percent+label")
-    st.plotly_chart(style(fig_category, currency=False, legend=False), use_container_width=True)
+    st.plotly_chart(
+        style(fig_category, currency=False, legend=False), use_container_width=True
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +220,10 @@ with left2:
     st.subheader("Top 10 Brands by Revenue")
     by_brand = get_revenue_by(filters, "brand", limit=10)
     fig_brand = px.bar(
-        by_brand, x="revenue", y="brand", orientation="h",
+        by_brand,
+        x="revenue",
+        y="brand",
+        orientation="h",
         labels={"brand": "", "revenue": "Revenue"},
     )
     fig_brand.update_layout(yaxis={"categoryorder": "total ascending"})
@@ -195,9 +232,13 @@ with left2:
 with right2:
     st.subheader("Revenue by Payment Method")
     by_payment = get_revenue_by(filters, "payment_method")
-    fig_payment = px.pie(by_payment, names="payment_method", values="revenue", hole=0.55)
+    fig_payment = px.pie(
+        by_payment, names="payment_method", values="revenue", hole=0.55
+    )
     fig_payment.update_traces(textposition="outside", textinfo="percent+label")
-    st.plotly_chart(style(fig_payment, currency=False, legend=False), use_container_width=True)
+    st.plotly_chart(
+        style(fig_payment, currency=False, legend=False), use_container_width=True
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -207,12 +248,18 @@ st.subheader("Category → Brand Revenue Breakdown")
 treemap_data = get_category_brand_treemap(filters)
 if not treemap_data.empty:
     fig_tree = px.treemap(
-        treemap_data, path=["category_name", "brand_name"], values="revenue",
-        color="revenue", color_continuous_scale=["#B3D9F2", PALETTE[2]],
+        treemap_data,
+        path=["category_name", "brand_name"],
+        values="revenue",
+        color="revenue",
+        color_continuous_scale=["#B3D9F2", PALETTE[2]],
     )
     fig_tree.update_traces(textinfo="label+value")
     fig_tree.update_layout(coloraxis_showscale=False)
-    st.plotly_chart(style(fig_tree, currency=False, legend=False, height=420), use_container_width=True)
+    st.plotly_chart(
+        style(fig_tree, currency=False, legend=False, height=420),
+        use_container_width=True,
+    )
 else:
     st.caption("No category/brand data for the current filters.")
 
@@ -228,7 +275,8 @@ with tbl_left:
     st.subheader("Top 10 Products")
     st.dataframe(
         get_top_products(filters, limit=10),
-        use_container_width=True, hide_index=True,
+        use_container_width=True,
+        hide_index=True,
         column_config={
             "revenue": st.column_config.NumberColumn("Revenue", format="$%.0f"),
             "units_sold": st.column_config.NumberColumn("Units Sold"),
@@ -239,9 +287,16 @@ with tbl_right:
     st.subheader("Top 10 Customers")
     st.dataframe(
         get_top_customers(filters, limit=10),
-        use_container_width=True, hide_index=True,
-        column_config={"revenue": st.column_config.NumberColumn("Revenue", format="$%.0f")},
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "revenue": st.column_config.NumberColumn("Revenue", format="$%.0f")
+        },
     )
 
 with st.expander("Recent order lines matching filters (most recent 200)"):
-    st.dataframe(get_recent_order_lines(filters, limit=200), use_container_width=True, hide_index=True)
+    st.dataframe(
+        get_recent_order_lines(filters, limit=200),
+        use_container_width=True,
+        hide_index=True,
+    )

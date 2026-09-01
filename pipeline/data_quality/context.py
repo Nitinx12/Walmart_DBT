@@ -162,7 +162,9 @@ def get_context() -> AbstractDataContext:
         for table_name in tables:
             asset_name = f"{prefix}_{table_name}"
             if asset_name not in existing_assets:
-                log.info(f"Registering table asset '{asset_name}' (schema={schema_name})")
+                log.info(
+                    f"Registering table asset '{asset_name}' (schema={schema_name})"
+                )
                 data_source.add_table_asset(
                     name=asset_name, table_name=table_name, schema_name=schema_name
                 )

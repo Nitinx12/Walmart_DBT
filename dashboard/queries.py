@@ -188,7 +188,9 @@ _DIMENSION_COLUMNS = {
 
 
 @st.cache_data(ttl=600)
-def get_revenue_by(filters: Filters, dimension: str, limit: int | None = None) -> pd.DataFrame:
+def get_revenue_by(
+    filters: Filters, dimension: str, limit: int | None = None
+) -> pd.DataFrame:
     """Revenue grouped by one dimension. `dimension` must be a key in the
     fixed whitelist above — never raw user text — so this can't be used
     to build arbitrary SQL."""

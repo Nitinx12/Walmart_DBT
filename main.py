@@ -86,8 +86,8 @@ def log_line(level: str, message: str) -> None:
 
 @dataclass
 class Stage:
-    name: str               # short key used in the summary table (matches ps1)
-    header: str             # descriptive text shown in the "STEP n/7" banner
+    name: str  # short key used in the summary table (matches ps1)
+    header: str  # descriptive text shown in the "STEP n/7" banner
     commands: list[list[str]]
     cwd: Path = PROJECT_ROOT
 
@@ -158,7 +158,9 @@ def preflight() -> None:
         run_command(["uv", "add", f"pyspark=={REQUIRED_PYSPARK_VERSION}"], PROJECT_ROOT)
 
     print(f"[PASS] Preflight completed (pyspark {REQUIRED_PYSPARK_PREFIX}.x)")
-    log_line("INFO", f"Preflight passed: pyspark version OK ({REQUIRED_PYSPARK_PREFIX}.x)")
+    log_line(
+        "INFO", f"Preflight passed: pyspark version OK ({REQUIRED_PYSPARK_PREFIX}.x)"
+    )
 
 
 def main() -> int:
@@ -215,7 +217,17 @@ def main() -> int:
         Stage(
             "Great Expectations",
             "GREAT EXPECTATIONS TESTS (Bronze, Silver, Gold)",
-            [["uv", "run", "python", "-m", "pipeline.data_quality.run", "--layer", "all"]],
+            [
+                [
+                    "uv",
+                    "run",
+                    "python",
+                    "-m",
+                    "pipeline.data_quality.run",
+                    "--layer",
+                    "all",
+                ]
+            ],
         ),
     ]
 

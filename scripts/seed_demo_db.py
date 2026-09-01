@@ -72,9 +72,12 @@ def anonymize_customers(df: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target_url", help="SQLAlchemy connection string for the demo Postgres")
     parser.add_argument(
-        "--schema", default="gold",
+        "target_url", help="SQLAlchemy connection string for the demo Postgres"
+    )
+    parser.add_argument(
+        "--schema",
+        default="gold",
         help="Schema name to create/use on the TARGET database (default: gold)",
     )
     args = parser.parse_args()
