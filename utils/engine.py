@@ -49,6 +49,17 @@ PYSPARK_DRIVER_PYTHON = os.getenv("PYSPARK_DRIVER_PYTHON")
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB = os.getenv("MONGO_DB")
 
+# =========================================================
+# DATABRICKS
+# =========================================================
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
+DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH")
+DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")
+# Optional: scopes queries to a specific catalog/schema instead of the SQL
+# warehouse's default. Only needed by scripts that actually target Databricks.
+DATABRICKS_CATALOG = os.getenv("DATABRICKS_CATALOG")
+DATABRICKS_SCHEMA = os.getenv("DATABRICKS_SCHEMA")
+
 
 # =========================================================
 # VALIDATION
@@ -86,5 +97,26 @@ if _missing_optional:
     warnings.warn(
         "Not set (only needed if you use the bronze/silver/gold schemas): "
         f"{', '.join(_missing_optional)}",
+        stacklevel=2,
+    )
+
+# Soft-required: only needed by scripts that actually connect to Databricks.
+# Missing values here don't stop the Postgres/Mongo pipeline from running,
+# but get_databricks_connection() in connection.py will fail with a clear
+# error the moment it's actually called without them.
+_optional_databricks = {
+    "DATABRICKS_HOST": DATABRICKS_HOST,
+    "DATABRICKS_HTTP_PATH": DATABRICKS_HTTP_PATH,
+    "DATABRICKS_TOKEN": DATABRICKS_TOKEN,
+    "DATABRICKS_CATALOG": DATABRICKS_CATALOG,
+    "DATABRICKS_SCHEMA": DATABRICKS_SCHEMA,
+}
+
+_missing_databricks = [k for k, v in _optional_databricks.items() if not v]
+
+if _missing_databricks:
+    warnings.warn(
+        "Not set (only needed if you connect to Databricks): "
+        f"{', '.join(_missing_databricks)}",
         stacklevel=2,
     )

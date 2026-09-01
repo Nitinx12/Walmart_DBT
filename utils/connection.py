@@ -9,14 +9,20 @@ Logging goes through utils/logger.py so connection events show up in the
 same log files as everything else.
 
 Usage:
-    from connection import get_mongo_db, get_postgres_engine
+    from connection import get_mongo_db, get_postgres_engine, get_databricks_connection
 
     db = get_mongo_db()
     engine = get_postgres_engine()
+    dbx = get_databricks_connection()
+
+Databricks support requires the `databricks-sql-connector` package
+(`uv add databricks-sql-connector`).
 """
 
 import logging
 
+from databricks import sql as databricks_sql
+from databricks.sql.exc import Error as DatabricksError
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from sqlalchemy import create_engine
@@ -33,6 +39,7 @@ log = get_logger("connection", console_level=logging.WARNING)
 
 _mongo_client = None
 _postgres_engine = None
+_databricks_connection = None
 
 
 def get_mongo_db():
@@ -95,3 +102,51 @@ def get_postgres_engine():
             raise
 
     return _postgres_engine
+
+
+def get_databricks_connection():
+    """Return a cached Databricks SQL connection, creating it on first use."""
+    global _databricks_connection
+
+    if _databricks_connection is None:
+        # Unlike Postgres/Mongo, these are only soft-validated in engine.py,
+        # so check here and fail loudly the moment a script actually tries
+        # to use Databricks without them configured.
+        required = {
+            "DATABRICKS_HOST": config.DATABRICKS_HOST,
+            "DATABRICKS_HTTP_PATH": config.DATABRICKS_HTTP_PATH,
+            "DATABRICKS_TOKEN": config.DATABRICKS_TOKEN,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise OSError(
+                f"Missing required environment variables for Databricks: "
+                f"{', '.join(missing)}"
+            )
+
+        log.info(f"Opening Databricks connection to '{config.DATABRICKS_HOST}'")
+
+        # catalog/schema are optional -- omit them entirely rather than pass
+        # None, so the warehouse's own default is used when unset.
+        connect_kwargs = {
+            "server_hostname": config.DATABRICKS_HOST,
+            "http_path": config.DATABRICKS_HTTP_PATH,
+            "access_token": config.DATABRICKS_TOKEN,
+        }
+        if config.DATABRICKS_CATALOG:
+            connect_kwargs["catalog"] = config.DATABRICKS_CATALOG
+        if config.DATABRICKS_SCHEMA:
+            connect_kwargs["schema"] = config.DATABRICKS_SCHEMA
+
+        try:
+            _databricks_connection = databricks_sql.connect(**connect_kwargs)
+            # Force a round trip now so connection errors surface here,
+            # not on the first real query somewhere downstream.
+            with _databricks_connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+        except DatabricksError:
+            _databricks_connection = None
+            log.exception("Failed to connect to Databricks")
+            raise
+
+    return _databricks_connection
