@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "689d512c-26f3-4382-93be-0740d6c9f297",
+      "id": "8d879c75-a454-443e-87b1-5f1c54f82895",
       "kwargs": {
         "column": "employee_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "be303e99-63b9-4ef0-8126-5f4609d288d3",
+      "id": "5bda1d42-25cc-4df4-ade0-8af8eed02e06",
       "kwargs": {
         "column": "employee_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "095904a6-f361-4dc3-9d78-9708061fe1c5",
+      "id": "9c47471f-724b-40da-a173-9aced35dcc51",
       "kwargs": {
         "column": "store_id"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "5bbc5916-8ea5-47dd-937d-9a24e695a872",
+      "id": "3a1f92f8-47ea-4d08-8503-6f971801c82d",
       "kwargs": {
         "column": "employee_name"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "eb94e654-10e9-4b4c-84e6-4abc257b0e29",
+      "id": "0ee719ab-1161-4255-a8f0-f601e93597bf",
       "kwargs": {
         "column": "job_title"
       },
@@ -46,7 +46,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "eef1dfd2-dcad-4e20-8463-bc591d4867db",
+      "id": "001404d0-48fc-4bb7-b4d5-79db24ba9d59",
       "kwargs": {
         "column": "salary",
         "min_value": 0.0
@@ -56,7 +56,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "cba453ec-968f-4c29-be45-20d0e3f4ad79",
+      "id": "c28c44ba-1fed-4341-bc39-bd6985ce74e0",
       "kwargs": {
         "column": "is_active"
       },
@@ -65,7 +65,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "c3642745-ab2c-4f43-9fb3-f96d1b742326",
+      "id": "1ea2b40d-ed9e-4dad-8b5b-b7b2e859c3bd",
       "kwargs": {
         "column": "silver_loaded_at"
       },

@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "effb5a5d-a962-4c30-b40a-2d5a57727e14",
+      "id": "8f04c6da-4d6c-4d69-ad14-596922377c5c",
       "kwargs": {
         "column": "store_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "5888f256-dba9-43cf-b126-a550cb2a53a0",
+      "id": "b169fd4a-e753-4551-9e23-6f34046c0c6e",
       "kwargs": {
         "column": "store_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "d7073a7b-f49c-4e52-aa08-1fe30f225876",
+      "id": "db58f789-50fe-4f6c-8b0b-3c37e5b2992b",
       "kwargs": {
         "column": "store_name"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "0d29e8b9-febf-4af0-ab66-af75949ccb52",
+      "id": "4edea4d9-fdde-4222-81aa-a77d21b2ccf8",
       "kwargs": {
         "column": "city"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "07c1a6db-1333-453b-b55f-5fc1dfb05270",
+      "id": "382f6d46-fa72-4aa1-87da-facced44fa87",
       "kwargs": {
         "column": "is_active"
       },
@@ -46,7 +46,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "f5e21205-16d5-40ce-9fbe-3d168e52740c",
+      "id": "3ef6df3f-a1b9-4404-8ce4-c7244dd7d936",
       "kwargs": {
         "column": "silver_loaded_at"
       },

@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "d65c57d9-422d-4e44-b9b9-62b4f6caef35",
+      "id": "4a4a7b16-276c-4960-93b0-fb5339d3aa65",
       "kwargs": {
         "column": "order_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "ed5e0186-b65c-428c-a7a5-449c7415aad7",
+      "id": "e3a76644-729d-4999-b7ca-b9d20e5ed2fb",
       "kwargs": {
         "column": "order_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "960c90b2-85d4-48d2-b3a3-408ddccb3c7d",
+      "id": "ac55492d-1260-442e-ac1f-d333f58b1036",
       "kwargs": {
         "column": "store_id"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "9f10f7cf-d347-43ce-9af2-db75a27b6703",
+      "id": "5a2722d9-365e-496d-a9ec-63dbcebc663d",
       "kwargs": {
         "column": "customer_id"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "97b54511-5db7-4992-a442-da06edd87a3d",
+      "id": "4877d170-5c59-4146-87a5-611426ece370",
       "kwargs": {
         "column": "payment_method_id"
       },
@@ -46,7 +46,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "7910be90-c659-4b6e-8926-36dd574f15a6",
+      "id": "6e10d7e0-745b-4eef-beb1-47b4c063a877",
       "kwargs": {
         "column": "order_status"
       },
@@ -55,7 +55,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "52a4347b-e004-4a57-8a76-952931983dd6",
+      "id": "acb86e08-82f5-40c7-8454-0d9da53d934b",
       "kwargs": {
         "column": "total_amount",
         "min_value": 0.0
@@ -65,7 +65,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "eb7e05dd-295b-4c4c-8d20-8298558f08fc",
+      "id": "b4409513-fcdc-436e-945e-961145865840",
       "kwargs": {
         "column": "order_timestamp"
       },
@@ -74,7 +74,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "56c24426-bf57-402a-ab1d-fb7229cfc480",
+      "id": "ab0c18ea-384c-4d0a-b983-442f5c980f45",
       "kwargs": {
         "column": "is_active"
       },
@@ -83,7 +83,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "41d0dce4-4752-4759-9e72-e658cf367c57",
+      "id": "4e1e468c-e3ea-479f-b2eb-ac92f67e1fc4",
       "kwargs": {
         "column": "gold_loaded_at"
       },

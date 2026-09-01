@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "b439ba5f-e1c1-423e-8022-291a470f0bbc",
+      "id": "b0282a48-5e7a-4e0e-820a-d0bd7eac9e37",
       "kwargs": {
         "column": "order_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "48921abd-f005-46da-bc74-3dbc071f1fdb",
+      "id": "13c34c78-f583-48c6-81e2-be5bd875ee9b",
       "kwargs": {
         "column": "order_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "5a64cd6e-7059-4d1a-afe7-080c1e45ea46",
+      "id": "23cebd52-4850-4082-bbe2-b323953fee1f",
       "kwargs": {
         "column": "customer_id"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "f535fa75-f7ad-438c-b828-e9a3dfb1da5e",
+      "id": "d10d4845-d3c6-4659-8396-83e436bd554c",
       "kwargs": {
         "column": "store_id"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "49a1d8e6-4472-4c89-9de4-ee0cfc0ab3e7",
+      "id": "c210b04a-28f6-41b7-9a70-8e87217d64ad",
       "kwargs": {
         "column": "total_amount",
         "min_value": 0.0
@@ -47,7 +47,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "236b1e1c-481a-45a4-8808-2ad460fbe5f1",
+      "id": "29dd4ec5-7f5b-40ae-aaf9-f3da54e99822",
       "kwargs": {
         "column": "order_status"
       },
@@ -56,7 +56,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "cb8e4649-fe8a-4c36-934c-9d2c7d6ce6a0",
+      "id": "50019c70-fcc6-4380-a92f-df994714b8f6",
       "kwargs": {
         "column": "payment_method"
       },

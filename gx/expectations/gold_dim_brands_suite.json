@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "10816445-d709-4fba-96be-b87440b84152",
+      "id": "74311ccf-da18-4ae5-bd60-3c20d28e8510",
       "kwargs": {
         "column": "brand_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "5c475d00-b91d-4140-bfd6-9c8dfcf54818",
+      "id": "8072a644-b3c3-4e29-9388-210395e01a6e",
       "kwargs": {
         "column": "brand_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "9abc2e45-fc48-42a2-9008-8a250254f65f",
+      "id": "2e6d1b7d-15a0-4a44-84b3-ee62d1788cbe",
       "kwargs": {
         "column": "brand_name"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "1421f649-5e02-47bb-a35f-3c720add39a5",
+      "id": "28b642d8-6198-45ba-9502-eae5860ac13c",
       "kwargs": {
         "column": "brand_name"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "c54b1926-9bdb-4f77-890e-4dfe8c895a23",
+      "id": "873eabe6-1109-44c5-969f-90e81a5d9173",
       "kwargs": {
         "column": "gold_loaded_at"
       },
