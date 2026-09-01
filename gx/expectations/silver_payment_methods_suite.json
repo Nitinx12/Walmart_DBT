@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "c6a60fc9-cc61-468e-86e6-c8807ba61b68",
+      "id": "d36a9bbc-4bcf-4d68-a38e-5bf183101120",
       "kwargs": {
         "column": "payment_method_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "7d3de164-3082-4609-9098-4cf0ce425d2d",
+      "id": "8651df71-b501-4022-8fe6-ffaaad28d156",
       "kwargs": {
         "column": "payment_method_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "6222af72-104d-4d38-aef4-c88ebe5df2d5",
+      "id": "a0d2fd97-722d-49d9-b7f5-46cfc92fb5a0",
       "kwargs": {
         "column": "payment_method_name"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "b9459f9b-ed46-4879-b4ec-1a327fbed7fa",
+      "id": "fa10eed5-d84c-4436-95ec-cc93ab48cad0",
       "kwargs": {
         "column": "payment_method_name"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "c85c37f1-0076-49d2-b780-38ec0830056f",
+      "id": "6b502adf-c925-4f37-a66a-41b9d4651686",
       "kwargs": {
         "column": "silver_loaded_at"
       },
