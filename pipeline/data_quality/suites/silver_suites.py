@@ -50,6 +50,7 @@ directly from inside `suites/`.
 import logging
 
 import great_expectations as gx
+
 from pipeline.data_quality.context import get_context, get_silver_asset
 from utils.logger import get_logger
 

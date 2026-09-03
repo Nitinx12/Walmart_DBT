@@ -31,6 +31,7 @@ you're hitting from the `suites/` directory in your terminal session.
 import logging
 
 import great_expectations as gx
+
 from pipeline.data_quality.context import get_bronze_asset, get_context
 from utils.logger import get_logger
 

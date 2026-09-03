@@ -38,6 +38,7 @@ import sys
 from dataclasses import dataclass, field
 
 import great_expectations as gx
+
 from pipeline.data_quality.context import get_context
 from pipeline.data_quality.suites.bronze_suites import ALL_BRONZE_VALIDATIONS
 from pipeline.data_quality.suites.gold_suites import ALL_GOLD_VALIDATIONS
