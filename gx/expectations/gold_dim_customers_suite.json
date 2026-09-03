@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "c26c534f-539d-45e7-a09d-fbf49bd9f2b0",
+      "id": "890f6fbb-2921-4f34-8595-30cdc00ffbe6",
       "kwargs": {
         "column": "customer_id"
       },
@@ -10,7 +10,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "3951b49b-f14e-47a7-969e-ce71886d19c7",
+      "id": "72fd0194-c8e4-464e-a8e0-6d2abd542d9f",
       "kwargs": {
         "column": "customer_id"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_values_to_be_unique"
     },
     {
-      "id": "a8f178d6-70f0-4876-8c6c-99e28c300e71",
+      "id": "72be9119-7a17-446c-9052-a962917ae462",
       "kwargs": {
         "column": "customer_name"
       },
@@ -28,7 +28,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "2d391c10-059d-47e1-8735-7ef0c5e30109",
+      "id": "4ab222a8-672b-4bac-9f81-ce3c327f2611",
       "kwargs": {
         "column": "email"
       },
@@ -37,7 +37,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "0f88b5ab-9369-465b-8a08-c55bf91a0c0c",
+      "id": "5889a21c-8307-4499-b20d-74a21d86cb8b",
       "kwargs": {
         "column": "email",
         "regex": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
@@ -47,7 +47,7 @@
       "type": "expect_column_values_to_match_regex"
     },
     {
-      "id": "6ea34294-a35e-412b-8962-612bc2e12db2",
+      "id": "bfc16c2c-7c83-45bb-a268-198c03b62c76",
       "kwargs": {
         "column": "is_active"
       },
@@ -56,7 +56,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "7a8b29bd-be24-42f1-9e24-a598b36f6bcf",
+      "id": "7a0e3047-55ba-4764-8d7c-ef6e48b35d51",
       "kwargs": {
         "column": "country"
       },
@@ -65,7 +65,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "a2a7abb7-f76f-4ba6-a755-8def11f8caac",
+      "id": "4ed526f9-6113-4de1-af0d-5b461b4e5a71",
       "kwargs": {
         "column": "created_timestamp"
       },
@@ -74,7 +74,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "c6701e61-1ccd-4501-bcf3-bba610443f6d",
+      "id": "29b05728-4fad-4a7f-b6f3-a5bbfb3c433b",
       "kwargs": {
         "column": "gold_loaded_at"
       },
